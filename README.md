@@ -15,6 +15,6 @@
     ```
 ## Running the App
 
-1. Open two terminal windows -- one for the app console and one for the api.
+1. Open two terminal windows -- one for the app console and one for the api. Navigate to the `gradly/app` directory in both.
 2. In the first terminal, enter `yarn start` to start the react app on port 3000.
 3. In the second terminal, enter `yarn start-api` to start the flask api on port 5000.
