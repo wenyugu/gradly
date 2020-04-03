@@ -9,5 +9,9 @@ app.config.from_object(Config)  # all config options are specified in an externa
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
+@app.shell_context_processor
+def make_shell_context():
+    return {'db': db}
+
 # keep this at the bottom to avoid circular dependencies
 import routes, models
