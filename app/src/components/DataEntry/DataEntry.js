@@ -6,6 +6,7 @@ import './DataEntry.css';
 import { empOptions, degreeOptions, industryOptions, institutionOptions, skillsOptions, yearOptions } from '../../constants/options';
 import 'react-bootstrap-range-slider/dist/react-bootstrap-range-slider.css';
 import RangeSlider from 'react-bootstrap-range-slider';
+import { defaultEducation, defaultExperience, defaultEducations, defaultExperiences } from '../../constants/constant';
 
 const selectStyles = {
     menuPortal: base => ({ ...base, zIndex: 9999 }),
@@ -16,22 +17,8 @@ export default class DataEntry extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            education: [{
-                school: '',
-                degree: '',
-                major: '',
-                gpa: '',
-                year: 1900,
-                courses: [{num: '', name: ''}]
-            }],
-            experience: [{
-                employer: '',
-                industry: '',
-                title: '',
-                salary: 0,
-                type: '',
-                rating: 0,
-            }],
+            education: defaultEducations,
+            experience: defaultExperiences,
             skills: [],
             validated: false
         };
@@ -39,15 +26,7 @@ export default class DataEntry extends Component {
 
     addEducation = () => {
         const values = [...this.state.education];
-        values.push({
-            school: '',
-            degree: '',
-            major: '',
-            gpa: 0,
-            year: 1900,
-            courses: [{ num: '', name: '' }]
-            }
-        );
+        values.push(defaultEducation);
         this.setState({education: values});
     }
 
@@ -71,15 +50,7 @@ export default class DataEntry extends Component {
 
     addExperience = () => {
         const values = [...this.state.experience];
-        values.push({
-            employer: '',
-            industry: '',
-            title: '',
-            salary: 0,
-            type: '',
-            rating: 0,
-        }
-        );
+        values.push(defaultExperience);
         this.setState({experience: values});
     }
 
