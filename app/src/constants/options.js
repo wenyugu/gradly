@@ -268,16 +268,11 @@ export const skillsOptions = [
     { value: 'c/c++', label: 'C/C++' }
 ]
 
-export const salaryOptions = [
-    { value: 50000, label: '50k'},
-    { value: 1000000, label: '100k'},
-    { value: 1500000, label: '150k'},
-    { value: 2000000, label: '200k'},
-    { value: 3000000, label: '300k'},
-    { value: 5000000, label: '500k'},
-    { value: 10000000, label: '1M'},
-    { value: 500000000, label: '5M or above'}
-]
+var year = new Date().getFullYear() + 4;
+const years = Array.from(new Array(100),(val, index) => year - index);
+export const yearOptions = years.map(el => (
+    { value: el, label: el}
+));
 
 export const institutionOptions = [
     { value: 'cmu', label: 'Carnegie Mellon University'},

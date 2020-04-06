@@ -3,7 +3,7 @@ import { Accordion, Button, Card, Form, Row, Col } from 'react-bootstrap';
 import Select from 'react-select';
 import CreatableSelect from 'react-select/creatable';
 import './DataEntry.css';
-import { empOptions, degreeOptions, industryOptions, institutionOptions, skillsOptions, salaryOptions } from '../../constants/options';
+import { empOptions, degreeOptions, industryOptions, institutionOptions, skillsOptions, yearOptions } from '../../constants/options';
 import 'react-bootstrap-range-slider/dist/react-bootstrap-range-slider.css';
 import RangeSlider from 'react-bootstrap-range-slider';
 
@@ -15,19 +15,16 @@ const selectStyles = {
 export default class DataEntry extends Component {
     constructor(props) {
         super(props);
-        var year = new Date().getFullYear() + 4;
-        this.years = Array.from(new Array(100),(val, index) => year - index);
         this.state = {
             education: [{
                 school: '',
                 degree: '',
                 major: '',
-                gpa: 0,
+                gpa: '',
                 year: 1900,
-                courses: [{num: 0, name: ''}]
+                courses: [{num: '', name: ''}]
             }],
             experience: [{
-                order: 0,
                 employer: '',
                 industry: '',
                 title: '',
@@ -35,7 +32,8 @@ export default class DataEntry extends Component {
                 type: '',
                 rating: 0,
             }],
-            skills: []
+            skills: [],
+            validated: false
         };
     }
 
@@ -47,7 +45,7 @@ export default class DataEntry extends Component {
             major: '',
             gpa: 0,
             year: 1900,
-            courses: [{ num: 0, name: '' }]
+            courses: [{ num: '', name: '' }]
             }
         );
         this.setState({education: values});
@@ -61,7 +59,7 @@ export default class DataEntry extends Component {
 
     addCourse = index => {
         const values = [...this.state.education];
-        values[index].courses.push({num: 0, name: ''});
+        values[index].courses.push({num: '', name: ''});
         this.setState({ education: values });
     };
 
@@ -74,7 +72,6 @@ export default class DataEntry extends Component {
     addExperience = () => {
         const values = [...this.state.experience];
         values.push({
-            order: 0,
             employer: '',
             industry: '',
             title: '',
@@ -92,16 +89,64 @@ export default class DataEntry extends Component {
         this.setState({ experience: values });
     };
 
-    handleRatingChange = (e, idx) => {
+    handleEducationChange = (input, idx) => event => {
+        const values = [...this.state.education];
+        values[idx][input] = event.target.value;
+        this.setState({
+            education: values,
+        });
+    }
+
+    handleExperienceChange = (input, idx) => event => {
         const values = [...this.state.experience];
-        values[idx].rating = e.target.value;
-        this.setState({ experience: values });
+        values[idx][input] = event.target.value;
+        this.setState({ 
+            experience : values 
+        });
+    }
+
+    handleCourseChange = (item, pidx, sidx) => event => {
+        const values = [...this.state.education];
+        values[pidx].courses[sidx][item] = event.target.value;
+        this.setState({
+            education: values,
+        });
+    }
+
+    handleSkillsChange = options => {
+        const values = options.map(el => (el.label));
+        console.log(values);
+        this.setState({ 
+            skills : values 
+        });
+    }
+
+    handleSelect = (input, idx) => option => {
+        if (!option) {return;}
+        const values = [...this.state.education];
+        values[idx][input] = option.label;
+        this.setState({
+            education: values,
+        });
+    }
+
+    handleSubmit = event => {
+        const form = event.currentTarget;
+        event.preventDefault();
+        if (form.checkValidity() === false) {
+            event.stopPropagation();
+        } else {
+            // validated
+        }
+        this.setState({
+            validated: true,
+        });
     }
 
     render() {
         return (
             <div>
-
+                <Form onSubmit={this.handleSubmit}>
                 <Accordion defaultActiveKey="0" style={{'text-align': 'left'}}>
                     <Card>
                         <Accordion.Toggle as={Card.Header} variant="link" eventKey="0">
@@ -109,7 +154,6 @@ export default class DataEntry extends Component {
                         </Accordion.Toggle>
                         <Accordion.Collapse eventKey="0">
                             <Card.Body>
-                                <Form >
                                     {
                                         this.state.education.map((el, idx) => (
                                             <Fragment>
@@ -117,9 +161,12 @@ export default class DataEntry extends Component {
                                                 <Form.Group>
                                                     <Form.Label style={{'margin-bottom': '18px'}}>School</Form.Label>
                                                     <CreatableSelect
+                                                        isClearable
+                                                        isSearchable
                                                         menuPortalTarget={document.querySelector('body')}
                                                         styles={selectStyles}
                                                         options={institutionOptions}
+                                                        onChange={this.handleSelect('school', idx)}
                                                     />
                                                 </Form.Group>
                                                 <Form.Group >
@@ -132,31 +179,48 @@ export default class DataEntry extends Component {
                                                         menuPortalTarget={document.querySelector('body')}
                                                         styles={selectStyles}
                                                         options={degreeOptions}
+                                                        onChange={this.handleSelect('degree', idx)}
                                                     />
                                                 </Form.Group>
                                                 <Row>
                                                     <Col>
                                                         <Form.Group>
                                                             <Form.Label>Major</Form.Label>
-                                                            <Form.Control placeholder="Major" />
+                                                            <Form.Control 
+                                                                placeholder="Major" 
+                                                                type="text"
+                                                                required
+                                                                value={this.state.education[idx].major}
+                                                                onChange={this.handleEducationChange('major', idx)}
+                                                            />
+                                                            <Form.Control.Feedback type="invalid">
+                                                                Please enter your major.
+                                                            </Form.Control.Feedback>
                                                         </Form.Group>
                                                     </Col>
                                                     <Col>
                                                         <Form.Group>
                                                             <Form.Label>GPA</Form.Label>
-                                                            <Form.Control placeholder="GPA: Optional" />
+                                                            <Form.Control
+                                                                placeholder="GPA: Optional"
+                                                                type="number"
+                                                                value={this.state.education[idx].gpa}
+                                                                onChange={this.handleEducationChange('gpa', idx)}
+                                                            />
                                                         </Form.Group>
                                                     </Col>
                                                 </Row>
                                                 <Form.Group >
                                                     <Form.Label>Graduation Year</Form.Label>
-                                                    <Form.Control as="select" value="Choose...">
-                                                        {
-                                                            this.years.map((year, index) => {
-                                                                return <option key={`year${index}`} value={year}>{year}</option>
-                                                            })
-                                                        }
-                                                    </Form.Control>
+                                                    <Select
+                                                        className="basic-single"
+                                                        classNamePrefix="select"
+                                                        isSearchable
+                                                        menuPortalTarget={document.querySelector('body')}
+                                                        styles={selectStyles}
+                                                        options={yearOptions}
+                                                        onChange={this.handleSelect('year', idx)}
+                                                    />
                                                 </Form.Group>
                                                 <Form.Label>Courses</Form.Label>
                                                 {
@@ -167,13 +231,23 @@ export default class DataEntry extends Component {
                                                                 <Col>
                                                                     <Form.Group>
                                                                         <Form.Label>Course Name</Form.Label>
-                                                                        <Form.Control placeholder="Ex. Database Systems" />
+                                                                        <Form.Control 
+                                                                            placeholder="Ex. Database Systems" 
+                                                                            type='text'
+                                                                            value={this.state.education[idx].courses[index].name}
+                                                                            onChange={this.handleCourseChange('name', idx, index)}
+                                                                        />
                                                                     </Form.Group>
                                                                 </Col>
                                                                 <Col>
                                                                     <Form.Group>
                                                                         <Form.Label>Course Number</Form.Label>
-                                                                        <Form.Control placeholder="Ex. CS411" />
+                                                                        <Form.Control 
+                                                                            placeholder="Ex. CS411" 
+                                                                            type='text'
+                                                                            value={this.state.education[idx].courses[index].num}
+                                                                            onChange={this.handleCourseChange('num', idx, index)}
+                                                                        />
                                                                     </Form.Group>
                                                                 </Col>
                                                             </Row>
@@ -187,7 +261,6 @@ export default class DataEntry extends Component {
                                     <div>
                                         <Button variant="primary" onClick={this.addEducation}>Add education</Button>
                                     </div>
-                                </Form>
                             </Card.Body>
                         </Accordion.Collapse>
                     </Card>
@@ -197,18 +270,35 @@ export default class DataEntry extends Component {
                         </Accordion.Toggle>
                         <Accordion.Collapse eventKey="2">
                             <Card.Body>
-                                <Form>
                                     {
                                         this.state.experience.map((el, idx) => (
                                             <Fragment>
                                                 <Button variant="dark" className='float-right' size='sm' onClick={() => this.removeExperience(idx)}>—</Button>
                                                 <Form.Group>
                                                     <Form.Label>Employer</Form.Label>
-                                                    <Form.Control placeholder="Ex. Google" />
+                                                    <Form.Control 
+                                                        placeholder="Ex. Google" 
+                                                        type='text'
+                                                        required
+                                                        value={this.state.experience[idx].employer}
+                                                        onChange={this.handleExperienceChange('employer', idx)}
+                                                    />
+                                                    <Form.Control.Feedback type="invalid">
+                                                        Please enter your employer.
+                                                    </Form.Control.Feedback>
                                                 </Form.Group>
                                                 <Form.Group>
                                                     <Form.Label>Title</Form.Label>
-                                                    <Form.Control placeholder="Ex. Software Engineer" />
+                                                    <Form.Control 
+                                                        placeholder="Ex. Software Engineer" 
+                                                        type='text'
+                                                        required
+                                                        value={this.state.experience[idx].title}
+                                                        onChange={this.handleExperienceChange('title', idx)}
+                                                    />
+                                                    <Form.Control.Feedback type="invalid">
+                                                        Please enter your title.
+                                                    </Form.Control.Feedback>
                                                 </Form.Group>
                                                 <Form.Group>
                                                     <Form.Label>Employment Type</Form.Label>
@@ -220,31 +310,36 @@ export default class DataEntry extends Component {
                                                         menuPortalTarget={document.querySelector('body')}
                                                         styles={selectStyles}
                                                         options={empOptions}
+                                                        onChange={this.handleSelect('type', idx)}
                                                     />
                                                 </Form.Group>
                                                 <Form.Group>
                                                     <Form.Label>Industry</Form.Label>
                                                     <CreatableSelect
-                                                        isMulti
+                                                        isClearable
+                                                        isSearchable
                                                         menuPortalTarget={document.querySelector('body')}
                                                         styles={selectStyles}
                                                         options={industryOptions}
+                                                        onChange={this.handleSelect('industry', idx)}
                                                     />
                                                 </Form.Group>
                                                 <Form.Group>
-                                                    <Form.Label>Salary Range</Form.Label>
-                                                    <Select
-                                                        className="basic-single"
-                                                        classNamePrefix="select"
-                                                        isClearable
-                                                        menuPortalTarget={document.querySelector('body')}
-                                                        styles={selectStyles}
-                                                        options={salaryOptions}
+                                                    <Form.Label>Annual Salary</Form.Label>
+                                                    <Form.Control 
+                                                        placeholder='USD per year'
+                                                        type='number'
+                                                        required
+                                                        value={this.state.experience[idx].salary}
+                                                        onChange={this.handleExperienceChange('salary', idx)}
                                                     />
+                                                    <Form.Control.Feedback type="invalid">
+                                                        Please enter your estimated salary.
+                                                    </Form.Control.Feedback>
                                                 </Form.Group>
                                                 <Form.Group>
-                                                    <Form.Label>Rating</Form.Label>
-                                                    <RangeSlider value={this.state.experience[idx].rating} onChange={e => this.handleRatingChange(e, idx)} max={10} />
+                                                    <Form.Label>Rating (0-10)</Form.Label>
+                                                    <RangeSlider value={this.state.experience[idx].rating} onChange={this.handleExperienceChange('rating', idx)} max={10} />
                                                 </Form.Group>
                                             </Fragment>
                                         ))
@@ -252,7 +347,6 @@ export default class DataEntry extends Component {
                                     <div>
                                         <Button variant="primary" onClick={this.addExperience}>Add experience</Button>
                                     </div>
-                                </Form>
                             </Card.Body>
                         </Accordion.Collapse>
                     </Card>
@@ -262,7 +356,6 @@ export default class DataEntry extends Component {
                         </Accordion.Toggle>
                         <Accordion.Collapse eventKey="3">
                             <Card.Body>
-                                <Form>
                                     <Form.Group>
                                         <Form.Label>Skills</Form.Label>
                                         <CreatableSelect
@@ -270,16 +363,17 @@ export default class DataEntry extends Component {
                                             menuPortalTarget={document.querySelector('body')}
                                             styles={selectStyles}
                                             options={skillsOptions}
+                                            onChange={this.handleSkillsChange}
                                         />
                                     </Form.Group>
-                                </Form>
                             </Card.Body>
                         </Accordion.Collapse>
                     </Card>
                 </Accordion>
                 <Card>
-                    <Button>Submit</Button>
+                    <Button type='submit'>Submit</Button>
                 </Card>
+                </Form>
             </div>
       );
     }
