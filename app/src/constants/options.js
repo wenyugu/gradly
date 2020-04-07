@@ -9,7 +9,7 @@ export const empOptions = [
 export const degreeOptions = [
     { value: 'associate', label: 'Associate' },
     { value: 'bachelor', label: 'Bachelor' },
-    { value: 'associate', label: 'Master' },
+    { value: 'master', label: 'Master' },
     { value: 'phd', label: 'Ph.D' },
 ]
 
