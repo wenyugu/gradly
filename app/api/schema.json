@@ -1,0 +1,60 @@
+{
+    "$schema": "http://json-schema.org/schema#",
+    "type": "object",
+    "properties": {
+        "$comment": "`id` is returned when looking up user and ignored otherwise",
+        "id": {"type": "integer"},
+        "education": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "required": ["school", "year"],
+                "properties": {
+                    "school": {"type": "string"},
+                    "year": {"type": ["integer"]},
+                    "degree": {"type": ["string", "null"],
+                               "enum": ["associate", "bachelor", "master", "phd"]},
+                    "major": {"type": ["string", "null"]},
+                    "gpa": {"type": ["number", "null"]},
+                    "courses": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "required": ["name", "num"],
+                            "properties": {
+                                "name": {"type": "string"},
+                                "num": {"type": "string"}
+                            },
+                            "$comment": "remove the enrollement for this class",
+                            "delete": {"type", "boolean"}
+                        }
+                    },
+                    "$comment": "remove the graduation and all enrollments for this school/year",
+                    "delete": {"type": "boolean"}
+                }
+            }
+        },
+        "experience": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "required": ["employer", "title"],
+                "properties": {
+                    "employer": {"type": "string"},
+                    "title": {"type": "string"},
+                    "industry": {"type": "string"},
+                    "salary": {"type": "integer"},
+                    "type": {"type": "string",
+                             "enum": ["intern", "research", "co-op", "part-time", "full-time"]},
+                    "rating": {"type": "integer"}
+                },
+                "$comment": "remove the experience for this position",
+                "delete": {"type", "boolean"}
+            }
+        },
+        "skills": {
+            "type": "array",
+            "items": {"type": "string"},
+        }
+    }
+}

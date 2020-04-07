@@ -25,3 +25,5 @@ yarn-error.log*
 # flask
 venv
 __pycache__
+*.db
+*.bak

@@ -1,0 +1,30 @@
+{
+    "education": [{
+        "school": "University of Illinois at Urbana-Champaign",
+        "year": 2019,
+        "gpa": 3.9,
+        "courses": [
+            {
+                "name": "Introduction to Algorithms and Models of Computation",
+                "num": "CS374",
+                "delete": true
+            },
+            {
+                "name": "Fault-Tolerant Digital System Design",
+                "num": "ECE542"
+            }
+        ]
+    }],
+    "experience": [
+        {
+            "employer": "Facebook",
+            "title": "Production Engineering Intern",
+            "salary": 96000
+        },
+        {
+            "employer": "Draper",
+            "title": "Student Undergraduate Engineer",
+            "delete": true
+        }
+    ]
+}
