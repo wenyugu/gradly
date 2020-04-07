@@ -1,0 +1,51 @@
+{
+    "type": "object",
+    "properties": {
+        "education": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "required": ["school", "year"],
+                "properties": {
+                    "school": {"type": "string"},
+                    "degree": {"type": ["string", "null"],
+                               "enum": ["associate", "bachelor", "master", "phd"]},
+                    "major": {"type": ["string", "null"]},
+                    "gpa": {"type": ["float", "null"]},
+                    "year": {"type": ["integer"]},
+                    "courses": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "required": ["name", "num"],
+                            "properties": {
+                                "name": {"type": "string"},
+                                "num": {"type": "string"}
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "experience": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "required": ["employer", "title"],
+                "properties": {
+                    "employer": {"type": "string"},
+                    "title": {"type": "string"},
+                    "industry": {"type": "string"},
+                    "salary": {"type": "integer"},
+                    "type": {"type": "string",
+                             "enum": ["intern", "research", "co-op", "part-time", "full-time"]},
+                    "rating": {"type": "integer"}
+                }
+            }
+        },
+        "skills": {
+            "type": "array",
+            "items": {"type": "string"}
+        }
+    }
+}

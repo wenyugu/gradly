@@ -34,6 +34,19 @@ tracks versions of the schema. To create the database for the first time:
 
 To update the DB schema, modify the models in `models.py`, then execute `flask db migrate` to generate a new revision file.  **NOTE:** This will not actually modify the database, you must run `upgrade` for your changes to take effect.
 
+#### Errors updating schema
+
+If you encounter errors upgrading the schema, one solution is to enter the flask shell and
+drop all tables then recreate them.  This will not attempt to retain any data, so this
+might not be a good idea if we have significant amounts of data but no automated way to
+ingest it.  Anyway, these are the steps:
+
+1. Enter the flask shell with `flask shell`
+2. Drop all the tables: `>>> db.drop_all()`
+3. Create the new tables: `>>> db.create_all()`
+4. Save the DB: `>>> db.session.commit()`
+5. Tell alembic (the flask db engine) that we did something and it should treat the current DB state as the application of all revisions: `flask db stamp head`
+
 ### Populating the Database
 
 Currently, there is no initial data in the database. The database file itself is

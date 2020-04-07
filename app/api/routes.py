@@ -2,8 +2,10 @@ import time
 from flask import request
 
 from api import app
-from api import db
-from models import *
+# from api import db
+# from models import *
+import crud
+from models import DegreeType, JobType, Industry
 
 
 @app.route('/time')
@@ -23,67 +25,119 @@ def get_current_time():
 #     return {'status': 'success'}
 
 
-@app.route('/api/user', methods=['GET', 'POST'])
-def user():
-    """Lookup (GET) or add (POST) a user.
-    For lookups, the userID is provided as URL parameter 'id'.
-    For new users, skills are provided as a string in the POST
-    body with key 'skills'.
-    """
-    if request.method == 'POST':
-        try:
-            skills = request.form['skills']
-        except KeyError:
-            skills = None
-        user = User(skills=skills)
-        db.session.add(user)
-        db.session.commit()
-        return {'status': 'success', 'id': user.id}
-    else:
-        userID = request.args.get('id', '', type=int)
-        user = User.query.get(userID)
-        return {'id': user.id, 'skills': user.skills}
+@app.route('/api/new_user', methods=['POST'])
+def new_user():
+    skills = None
+    education_history = []
+    work_history = []
+    print(request.json, flush=True)
+    for key, value in request.json.items():
+        if key == 'skills':
+            skills = value
+        elif key == 'education':
+            education_history = value
+        elif key == 'experience':
+            work_history = value
+
+    # create the user entity
+    userID = crud.create_user(skills)
+
+    # create education info
+    for item in education_history:
+        university = crud.read_or_create_university(item['school'])
+        grad_date = item['year']
+        if not isinstance(grad_date, int):
+            raise TypeError
+        degree = DegreeType(item['degree'])
+        major = item['major']
+        gpa = item['gpa']
+
+        crud.create_graduation(userID, university.name, grad_date, degree, major, gpa)
+
+        courses = item['courses']
+        for c in courses:
+            courseTitle = c['name']
+            courseNumber = c['num']
+
+            course = crud.find_course(courseTitle, courseNumber, university.name)
+            if course is not None:
+                courseID = course.id
+            else:
+                courseID = crud.create_course(courseTitle, courseNumber, university.name)
+
+            crud.add_enrollment(userID, courseID)
+
+    # create work experience info
+    for item in work_history:
+        employer = crud.read_or_create_employer(item['employer'])
+        title = item['title']
+        industry = Industry(item['industry'])
+        print(industry, flush=True)
+        salary = item['salary']
+        jobtype = JobType(item['type'])
+        rating = item['rating']
+
+        position = crud.find_position(employer, title)
+        if position is not None:
+            positionID = position.id
+        else:
+            positionID = crud.create_position(employer, title)
+
+        crud.create_experience(userID, positionID, industry, salary, jobtype, rating)
+
+    return {'userID': userID}
 
 
-@app.route('/api/university', methods=['GET', 'POST'])
-def university():
-    """Lookup (GET) or add (POST) a university.
-    Key (university name) is specified as URL parameter 'name'.
-    """
-    name = request.args.get('name', '')
-    if request.method == 'POST':
-        uni = University(name=name)
-        db.session.add(uni)
-        db.session.commit()
-        return {'status': 'success', 'id': uni.name}
-    else:
-        uni = University.query.get(name)
-        return {'name': uni.name}
+@app.route('/api/user/<int:userID>')
+def get_user(userID):
+    user = crud.read_user(userID)
+
+    userInfo = {}
+    userInfo['skills'] = user.skills.split(',')
+
+    courses = user.courses
+
+    userInfo['education'] = []
+    for graduation in user.graduated:
+        grad = {}
+        grad['school'] = graduation.university
+        grad['degree'] = graduation.degree.value
+        grad['year'] = graduation.gradDate
+        grad['major'] = graduation.major
+        grad['gpa'] = float(graduation.gpa)
+
+        grad['courses'] = []
+        for course in courses:
+            if course.universityName == graduation.university:
+                grad['courses'].append({
+                    'name': course.courseTitle,
+                    'num': course.courseNumber,
+                })
+
+        userInfo['education'].append(grad)
+
+    userInfo['experience'] = []
+    for job in user.experience:
+        positionID = job.positionID
+        position = crud.read_position(positionID)
+
+        exp = {}
+        exp['employer'] = position.employerName
+        exp['title'] = position.jobTitle
+        exp['industry'] = job.industry.value
+        exp['salary'] = job.salary
+        exp['type'] = job.type.value
+        exp['rating'] = job.rating
+
+        userInfo['experience'].append(exp)
+
+    return userInfo
 
 
-@app.route('/api/course', methods=['GET', 'POST'])
-def course():
-    """Lookup (GET) or add (POST) a course.
-    Lookups require course id ('id') and university name ('name') as URL parameters.
-    Insertions require 'name', 'title', and optionally 'area' in the POST body.
-    """
-    if request.method == 'POST':
-        name = request.form['name'] # TODO: do we have to enforce foreign key contraints?
-        title = request.form['title']
-        try:
-            area = request.form['area']
-        except KeyError:
-            area = None
-        course = Course(universityName=name, courseTitle=title, focusArea=area)
-        db.session.add(course)
-        db.session.commit()
-        return {'status': 'success', 'id': course.id}
-    else:
-        id = request.args.get('id', '', type=int)
-        name = request.args.get('name', '')
-        course = Course.query.get(id=id, universityName=name)
-        return {'id': course.id,
-                'university': course.universityName,
-                'title': course.courseTitle,
-                'focusArea': course.focusArea,
-                }
+@app.route('/api/delete_user/<int:userID>')
+def delete_user(userID):
+    user = crud.read_user(userID)
+    if user is not None:
+        crud.delete_user(userID)
+        return {'status': 'Deleted user {}'.format(userID)}
+    return {'status': 'User {} does not exist'.format(userID)}
