@@ -68,3 +68,24 @@ will be worked out soon.
 1. Open two terminal windows -- one for the app console and one for the api.
 2. In the first terminal, enter `yarn start` to start the react app on port 3000.
 3. In the second terminal, enter `yarn start-api` to start the flask api on port 5000.
+
+### Testing
+
+#### CRUD
+
+1. start up the api server with `yarn start-api` from within the `/app` directory.
+2. Add a new user: `cat db/data/user_<name>.json | curl -H "Content-Type: application/json" -d @- http://localhost:5000/api/user/new`, where `<name>` is some identifier. Note the userID returned by the server.
+3. Read the user's data: `curl http://localhost:5000/api/user/<id>`. Optionally, open the database file (`db/app.db`) in a database viewer (DB Browser for SQLite on macOS) to verify the data integrity.
+4. [Optional] Add an identical user so the update is easier to see in the DB browser.
+5. Update the user information: `cat db/data/user_<name>_update.json | curl -H "Content-Type: application/json" -d @- http://localhost:5000/api/user/<id>`.
+
+    - Note the format of the update JSON document. The schema is the same as the new user document, but only attributes which are included will be changed.
+    - To leave a value unchanged, simply do not include it in the update file.
+    - To remove a value, provide `null` for that parameter.
+    - To remove an entity (object), set `delete` to `true`.
+
+6. After verifying that the update took place, we may delete the user(s): `curl -X DELETE http://localhost:5000/api/user/<id>`.
+
+    - Note that deleting a user only deletes the relationships associated with the user, but not the entities on the other end of the relationships.
+    - Courses, Universities, Positions, and Employers will persist a user deletion.
+    - Graduations, Enrollments, and Experience will automatically be removed when the user is deleted.

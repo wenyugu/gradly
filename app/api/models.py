@@ -213,7 +213,7 @@ class Course(db.Model):
     # focusArea = db.Column(db.String(255))   # TODO: perhaps ENUM would be better?
 
     def __repr__(self):
-        return '<Course {} at {}>'.format(self.courseTitle, self.university)
+        return '<Course {} at {}>'.format(self.courseNumber, self.universityName)
 
 
 class Employer(db.Model):

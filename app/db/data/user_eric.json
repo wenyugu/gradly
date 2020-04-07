@@ -34,7 +34,6 @@
             "employer": "Facebook",
             "title": "Production Engineering Intern",
             "industry": "Internet",
-            "salary": null,
             "type": "intern",
             "rating": 10
         },
@@ -42,9 +41,7 @@
             "employer": "Draper",
             "title": "Student Undergraduate Engineer",
             "industry": "Defense & Space",
-            "salary": null,
-            "type": "intern",
-            "rating": 7
+            "type": "intern"
         }
     ]
 }

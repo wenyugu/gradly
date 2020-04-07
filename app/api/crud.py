@@ -1,4 +1,3 @@
-import datetime
 from typing import List, Union
 
 from api import db
@@ -21,18 +20,27 @@ def read_user(id: int) -> User:
     return User.query.get(id)
 
 
-def update_user(id: int, new_skills: List[str]) -> bool:
+def update_user(user: Union[int, User], new_skills: List[str]) -> bool:
     """Update a user's skill list.
+
+    If `new_skills` is None, then `user.skills` is set to None, otherwise
+    `user.skills` is the comma-joined concatenation of `new_skills`. Old values
+    are overwritten.
+
     Returns true if user exists and update is successful.
-    Returns false or raises an error otherwise.
     """
-    user = read_user(id)
-    if user is not None:
-        skills = ','.join(new_skills)
-        user.skills = skills
-        db.session.commit()
-        return True
-    return False
+    if not isinstance(user, User):
+        user = read_user(id)
+
+    if user is None:
+        return False
+
+    if new_skills is None:
+        user.skills = None
+    else:
+        user.skills = ','.join(new_skills)
+    db.session.commit()
+    return True
 
 
 def delete_user(id: int) -> bool:
@@ -254,11 +262,11 @@ def create_graduation(
     db.session.commit()
 
 
-def read_graduation(userID: int, uni: str, date: datetime.date) -> Graduate:
+def read_graduation(userID: int, uni: str, date: int) -> Graduate:
     return Graduate.query.get([userID, uni, date])
 
 
-def update_graduation(userID: int, uni: str, date: datetime.date, **kwargs) -> bool:
+def update_graduation(userID: int, uni: str, date: int, **kwargs) -> bool:
     grad = read_graduation(userID, uni, date)
     if grad is not None:
         for key, value in kwargs.items():
@@ -279,7 +287,7 @@ def update_graduation(userID: int, uni: str, date: datetime.date, **kwargs) -> b
     return False
 
 
-def delete_graduation(userID: int, uni: str, date: datetime.date) -> bool:
+def delete_graduation(userID: int, uni: str, date: int) -> bool:
     grad = read_graduation(userID, uni, date)
     if grad is not None:
         db.session.delete(grad)
@@ -341,7 +349,7 @@ def update_experience(userID: int, posID: int, **kwargs) -> bool:
 
 
 def delete_experience(userID: int, posID: int) -> bool:
-    exp = Experience.query.get([userID, posID])
+    exp = read_experience(userID, posID)
     if exp is not None:
         db.session.delete(exp)
         db.session.commit()
@@ -350,9 +358,11 @@ def delete_experience(userID: int, posID: int) -> bool:
 
 
 # Course Enrollment relationships
-def add_enrollment(userID: int, courseID: int) -> bool:
-    user = User.query.get(userID)
-    course = Course.query.get(courseID)
+def add_enrollment(user: Union[int, User], course: Union[int, Course]) -> bool:
+    if not isinstance(user, User):
+        user = User.query.get(user)
+    if not isinstance(course, Course):
+        course = Course.query.get(course)
     if user is None or course is None:
         return False
     user.courses.append(course)  # alternatively: course.students.append(user)
@@ -360,11 +370,16 @@ def add_enrollment(userID: int, courseID: int) -> bool:
     return True
 
 
-def remove_enrollment(userID: int, courseID: int) -> bool:
-    user = User.query.get(userID)
-    course = Course.query.get(courseID)
+def remove_enrollment(user: Union[int, User], course: Union[int, Course]) -> bool:
+    if not isinstance(user, User):
+        user = User.query.get(user)
+    if not isinstance(course, Course):
+        course = Course.query.get(course)
     if user is None or course is None:
         return False
-    user.courses.remove(course)  # alternatively: course.students.remove(user)
-    db.session.commit()
-    return True
+
+    if course in user.courses:
+        user.courses.remove(course)  # alternatively: course.students.remove(user)
+        db.session.commit()
+        return True
+    return False
