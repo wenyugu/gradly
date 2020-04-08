@@ -1,5 +1,5 @@
 import React, { Component, Fragment } from 'react';
-import { Accordion, Button, Card, Form, Row, Col } from 'react-bootstrap';
+import { Accordion, Alert, Button, Card, Form, Row, Col } from 'react-bootstrap';
 import Select from 'react-select';
 import CreatableSelect from 'react-select/creatable';
 import './DataEntry.css';
@@ -7,6 +7,7 @@ import { empOptions, degreeOptions, industryOptions, institutionOptions, skillsO
 import 'react-bootstrap-range-slider/dist/react-bootstrap-range-slider.css';
 import RangeSlider from 'react-bootstrap-range-slider';
 import { defaultEducation, defaultExperience, defaultEducations, defaultExperiences } from '../../constants/constant';
+const axios = require('axios');
 
 const selectStyles = {
     menuPortal: base => ({ ...base, zIndex: 9999 }),
@@ -20,7 +21,9 @@ export default class DataEntry extends Component {
             education: defaultEducations,
             experience: defaultExperiences,
             skills: [],
-            validated: false
+            validated: false,
+            uid: 0,
+            success: false
         };
     }
 
@@ -70,7 +73,11 @@ export default class DataEntry extends Component {
 
     handleExperienceChange = (input, idx) => event => {
         const values = [...this.state.experience];
-        values[idx][input] = event.target.value;
+        var value = event.target.value;
+        if (input === 'rating' || input === 'salary') {
+            value = parseInt(value);
+        }
+        values[idx][input] = value;
         this.setState({ 
             experience : values 
         });
@@ -85,19 +92,27 @@ export default class DataEntry extends Component {
     }
 
     handleSkillsChange = options => {
-        const values = options.map(el => (el.label));
-        console.log(values);
+        const values = options.map(el => (el.value));
         this.setState({ 
             skills : values 
         });
     }
 
-    handleSelect = (input, idx) => option => {
+    handleEducationSelect = (input, idx) => option => {
         if (!option) {return;}
         const values = [...this.state.education];
-        values[idx][input] = option.label;
+        values[idx][input] = option.value;
         this.setState({
             education: values,
+        });
+    }
+
+    handleExperienceSelect = (input, idx) => option => {
+        if (!option) {return;}
+        const values = [...this.state.experience];
+        values[idx][input] = option.value;
+        this.setState({
+            experience: values,
         });
     }
 
@@ -108,6 +123,18 @@ export default class DataEntry extends Component {
             event.stopPropagation();
         } else {
             // validated
+            const user = {
+                education: this.state.education,
+                experience: this.state.experience,
+                skills: this.state.skills
+            };
+            axios.post('/api/user/new', user)
+                .then(response => {
+                    this.setState({ uid: response.data.userID, success: true });
+                })
+                .catch(function (error) {
+                    console.log(error);
+                });
         }
         this.setState({
             validated: true,
@@ -117,6 +144,17 @@ export default class DataEntry extends Component {
     render() {
         return (
             <div>
+                {
+                    this.state.success ?
+                        (<Alert variant="success">
+                            <Alert.Heading>Submitted succesfully</Alert.Heading>
+                            <p>
+                                Thank you! We have received your response. Your userID is {this.state.uid}. Remember you can always update or delete your entry by using your ID.
+                            </p>
+                        </Alert>) :
+                        (null)
+                }
+
                 <Form onSubmit={this.handleSubmit}>
                 <Accordion defaultActiveKey="0" style={{'text-align': 'left'}}>
                     <Card>
@@ -137,7 +175,7 @@ export default class DataEntry extends Component {
                                                         menuPortalTarget={document.querySelector('body')}
                                                         styles={selectStyles}
                                                         options={institutionOptions}
-                                                        onChange={this.handleSelect('school', idx)}
+                                                        onChange={this.handleEducationSelect('school', idx)}
                                                     />
                                                 </Form.Group>
                                                 <Form.Group >
@@ -150,7 +188,7 @@ export default class DataEntry extends Component {
                                                         menuPortalTarget={document.querySelector('body')}
                                                         styles={selectStyles}
                                                         options={degreeOptions}
-                                                        onChange={this.handleSelect('degree', idx)}
+                                                        onChange={this.handleEducationSelect('degree', idx)}
                                                     />
                                                 </Form.Group>
                                                 <Row>
@@ -190,7 +228,7 @@ export default class DataEntry extends Component {
                                                         menuPortalTarget={document.querySelector('body')}
                                                         styles={selectStyles}
                                                         options={yearOptions}
-                                                        onChange={this.handleSelect('year', idx)}
+                                                        onChange={this.handleEducationSelect('year', idx)}
                                                     />
                                                 </Form.Group>
                                                 <Form.Label>Courses</Form.Label>
@@ -281,7 +319,7 @@ export default class DataEntry extends Component {
                                                         menuPortalTarget={document.querySelector('body')}
                                                         styles={selectStyles}
                                                         options={empOptions}
-                                                        onChange={this.handleSelect('type', idx)}
+                                                        onChange={this.handleExperienceSelect('type', idx)}
                                                     />
                                                 </Form.Group>
                                                 <Form.Group>
@@ -292,7 +330,7 @@ export default class DataEntry extends Component {
                                                         menuPortalTarget={document.querySelector('body')}
                                                         styles={selectStyles}
                                                         options={industryOptions}
-                                                        onChange={this.handleSelect('industry', idx)}
+                                                        onChange={this.handleExperienceSelect('industry', idx)}
                                                     />
                                                 </Form.Group>
                                                 <Form.Group>
