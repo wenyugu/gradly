@@ -2,7 +2,7 @@ export const defaultEducation = {
     school: '',
     degree: '',
     major: '',
-    gpa: '',
+    gpa: null,
     year: 1900,
     courses: [{ num: '', name: '' }]
 }
