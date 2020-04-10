@@ -2,8 +2,8 @@ import React, { Component } from 'react';
 import { Button, Container, InputGroup, FormControl } from 'react-bootstrap';
 import Select from 'react-select';
 import Profile from '../Profile';
+import DataEntry from '../DataEntry';
 import { queryOptions } from '../../constants/options'
-import {Column, Table} from 'react-virtualized';
 const axios = require('axios');
 
 export default class Dashboard extends Component {
@@ -13,28 +13,50 @@ export default class Dashboard extends Component {
             user: null,
             mode: 0,
             uid: null,
+            edittable: false,
         }
     }
 
     handleOperationSelect = (option) => {
-        this.setState({mode: option.value});
+        this.setState({mode: option.value, edittable: false});
+    }
+
+    getUser = () => {
+        axios.get('/api/user/' + this.state.uid)
+            .then(response => {
+                this.setState({ user: response.data, edittable: true })
+            })
+            .catch(error => {
+                console.log(error);
+            });
+    }
+
+    updateUser = user => {
+        axios.post('/api/user/' + this.state.uid, user)
+            .then(response => {
+                console.log(response.data);
+            })
+            .catch(error => {
+                console.log(error);
+            });
     }
 
     onClick = event => {
         event.preventDefault();
         if (this.state.uid) {
             if (this.state.mode === 0) {
-                axios.get('/api/user/' + this.state.uid)
+                this.getUser();
+            } else if (this.state.mode === 1) {
+                this.getUser();
+                
+            } else if (this.state.mode === 2) {
+                axios.delete('/api/user/' + this.state.uid)
                     .then(response => {
-                        this.setState({user: response.data})
+                        console.log(response.data);
                     })
                     .catch(error => {
                         console.log(error);
                     });
-            } else if (this.state.mode === 1) {
-
-            } else if (this.state.mode === 2) {
-
             }
         }
     }
@@ -58,10 +80,16 @@ export default class Dashboard extends Component {
                     </div>
                     <FormControl type='number' value={this.state.uid || ''} onChange={this.onChange}/>
                     <InputGroup.Append>
-                        <Button onClick={this.onClick} variant="outline-secondary" style={{margin: '0px'}}>Submit</Button>
+                        <Button onClick={this.onClick} variant="outline-secondary" style={{margin: '0px'}}>{this.state.mode === 1 ? 'Edit' : 'Submit'}</Button>
                     </InputGroup.Append>
                 </InputGroup>
-                <Profile user={this.state.user}/>
+                {
+                    this.state.edittable && this.state.mode === 1? (
+                        <DataEntry user={this.state.user} update={this.updateUser}/>
+                    ) : (
+                        <Profile user={this.state.user}/>
+                    )
+                }
             </Container>
         );
     }

@@ -266,12 +266,12 @@ export const industryOptions = [
 ]
 
 export const skillsOptions = [
-    { value: 'python', label: 'Python' },
-    { value: 'sql', label: 'SQL' },
-    { value: 'mongodb', label: 'MongoDB' },
-    { value: 'neo4j', label: 'Neo4J' },
-    { value: 'database management', label: 'Database Management' },
-    { value: 'c/c++', label: 'C/C++' }
+    { value: 'Python', label: 'Python' },
+    { value: 'SQL', label: 'SQL' },
+    { value: 'MongoDB', label: 'MongoDB' },
+    { value: 'Neo4J', label: 'Neo4J' },
+    { value: 'Database Management', label: 'Database Management' },
+    { value: 'C/C++', label: 'C/C++' }
 ]
 
 var year = new Date().getFullYear() + 4;

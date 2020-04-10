@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import './Profile.css';
 
 const capitalize = (s) => {
+    if (typeof s !== 'string') return s;
     return s.charAt(0).toUpperCase() + s.slice(1)
 }
 
