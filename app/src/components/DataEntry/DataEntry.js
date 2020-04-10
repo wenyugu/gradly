@@ -234,6 +234,7 @@ export default class DataEntry extends Component {
                                                             <Form.Control
                                                                 placeholder="GPA: Optional"
                                                                 type="number"
+                                                                step="0.01"
                                                                 value={user ? user.education[idx].gpa : (this.state.education[idx].gpa || '')}
                                                                 onChange={this.handleEducationChange('gpa', idx)}
                                                             />

@@ -7,12 +7,9 @@ const capitalize = (s) => {
 }
 
 export default class Profile extends Component {
-    constructor(props) {
-        super(props);
-    }
 
     render() {
-        const { user } = this.props;
+        const { user, error } = this.props;
         return (
             <div id='resume'>
                 {user ? (
@@ -73,7 +70,7 @@ export default class Profile extends Component {
                     </dd>
                 </dl>
                 </>
-                ) : null
+                ) : (error ? <h2>User Not Found</h2> : null)
                 }
             </div>
         );

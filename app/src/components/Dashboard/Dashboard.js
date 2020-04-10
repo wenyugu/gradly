@@ -14,6 +14,7 @@ export default class Dashboard extends Component {
             mode: 0,
             uid: null,
             edittable: false,
+            error: 0
         }
     }
 
@@ -24,10 +25,11 @@ export default class Dashboard extends Component {
     getUser = () => {
         axios.get('/api/user/' + this.state.uid)
             .then(response => {
-                this.setState({ user: response.data, edittable: true })
+                this.setState({ user: response.data, edittable: true, error: 0 });
             })
             .catch(error => {
                 console.log(error);
+                this.setState({ user: null, edittable: false, error: 1 });
             });
     }
 
@@ -56,6 +58,7 @@ export default class Dashboard extends Component {
                     })
                     .catch(error => {
                         console.log(error);
+                        this.setState({ error: 1 });
                     });
             }
         }
@@ -87,7 +90,7 @@ export default class Dashboard extends Component {
                     this.state.edittable && this.state.mode === 1? (
                         <DataEntry user={this.state.user} update={this.updateUser}/>
                     ) : (
-                        <Profile user={this.state.user}/>
+                        <Profile user={this.state.user} error={this.state.error}/>
                     )
                 }
             </Container>
