@@ -156,7 +156,7 @@ export default class DataEntry extends Component {
                 }
 
                 <Form onSubmit={this.handleSubmit}>
-                <Accordion defaultActiveKey="0" style={{'text-align': 'left'}}>
+                <Accordion defaultActiveKey="0" style={{textAlign: 'left'}}>
                     <Card>
                         <Accordion.Toggle as={Card.Header} variant="link" eventKey="0">
                             Education
@@ -165,10 +165,10 @@ export default class DataEntry extends Component {
                             <Card.Body>
                                     {
                                         this.state.education.map((el, idx) => (
-                                            <Fragment>
+                                            <Fragment key={`${el}~${idx}`}>
                                                 <Button variant="dark" className='float-right' size='sm' onClick={() => this.removeEducation(idx)}>—</Button>
                                                 <Form.Group>
-                                                    <Form.Label style={{'margin-bottom': '18px'}}>School</Form.Label>
+                                                    <Form.Label style={{marginBottom: '18px'}}>School</Form.Label>
                                                     <CreatableSelect
                                                         isClearable
                                                         isSearchable
@@ -234,7 +234,7 @@ export default class DataEntry extends Component {
                                                 <Form.Label>Courses</Form.Label>
                                                 {
                                                     this.state.education[idx].courses.map((elem, index) => (
-                                                        <Fragment>
+                                                        <Fragment key={`${elem}~${index}`}>
                                                             <Button variant="dark" className='float-right' size='sm' onClick={() => this.removeCourse(idx, index)}>—</Button>
                                                             <Row>
                                                                 <Col>
@@ -281,7 +281,7 @@ export default class DataEntry extends Component {
                             <Card.Body>
                                     {
                                         this.state.experience.map((el, idx) => (
-                                            <Fragment>
+                                            <Fragment key={`${el}~${idx}`}>
                                                 <Button variant="dark" className='float-right' size='sm' onClick={() => this.removeExperience(idx)}>—</Button>
                                                 <Form.Group>
                                                     <Form.Label>Employer</Form.Label>
@@ -338,7 +338,6 @@ export default class DataEntry extends Component {
                                                     <Form.Control 
                                                         placeholder='USD per year'
                                                         type='number'
-                                                        required
                                                         value={this.state.experience[idx].salary}
                                                         onChange={this.handleExperienceChange('salary', idx)}
                                                     />

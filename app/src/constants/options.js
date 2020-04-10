@@ -1,3 +1,9 @@
+export const queryOptions = [
+    { value: 0, label: 'Search' },
+    { value: 1, label: 'Update' },
+    { value: 2, label: 'Delete' },
+]
+
 export const empOptions = [
     { value: 'intern', label: 'Intern' },
     { value: 'research', label: 'Research' },

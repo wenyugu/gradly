@@ -1,0 +1,47 @@
+  
+  div#resume {
+    margin-top: 50px;
+    font: 16px Helvetica, Avernir, sans-serif;
+    line-height: 30px;
+    color: #000
+  }
+  
+  div#resume h2 {
+    font-size: 20px;
+    font-weight: bold;
+    margin: 0 0 6px 0;
+    position: relative
+  }
+  
+  div#resume p {
+    margin: 0 0 3px 0
+  }
+
+  div#resume div {
+    margin-bottom: 15px;
+  }
+
+  div#resume dt {
+    font-style: italic;
+    font-weight: bold;
+    font-size: 18px;
+    text-align: right;
+    padding: 0 26px 0 0;
+    width: 150px;
+    border-right: 1px solid black
+  }
+  
+  div#resume dl {
+    display: table-row
+  }
+  
+  div#resume dl dt,
+  div#resume dl dd {
+    display: table-cell;
+    padding-bottom: 20px
+  }
+  
+  div#resume dl dd {
+    width: 1000px;
+    padding-left: 100px
+  }
