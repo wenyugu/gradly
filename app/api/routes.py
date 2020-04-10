@@ -45,7 +45,7 @@ def new_user():
         200:
             description: User created
     """
-    # app.logger.debug(request.json)
+    app.logger.debug(request.json)
     skills = request.json.get('skills')
     education_history = request.json.get('education', [])
     work_history = request.json.get('experience', [])
@@ -231,6 +231,8 @@ def update_user(userID):
                 value = item[key]
                 if key == 'degree':
                     value = DegreeType(value)
+                if key == 'gpa':
+                    value = float(value)
                 kwargs[key] = value
         crud.update_graduation(user.id, school, grad_date, **kwargs)
 
@@ -268,16 +270,18 @@ def update_user(userID):
             continue
 
         if position is None:
-            position = crud.create_position(employerName, title)
+            positionID = crud.create_position(employerName, title)
+        else:
+            positionID = position.id
 
         # If the experience does not yet exist, create it,
         # otherwise update only those fields which appear in the data
-        if crud.read_experience(user.id, position.id) is None:
+        if crud.read_experience(user.id, positionID) is None:
             industry = Industry(item.get('industry'))
             salary = item.get('salary')
             jobtype = JobType(item.get('type'))
             rating = item.get('rating')
-            crud.create_experience(user.id, position.id, industry, salary, jobtype, rating)
+            crud.create_experience(user.id, positionID, industry, salary, jobtype, rating)
         else:
             kwargs = {}
             for key in ['industry', 'salary', 'type', 'rating']:
@@ -288,7 +292,7 @@ def update_user(userID):
                     elif key == 'type':
                         value = JobType(value)
                     kwargs[key] = value
-            crud.update_experience(user.id, position.id, **kwargs)
+            crud.update_experience(user.id, positionID, **kwargs)
 
     # Return HTTP code 204 No Content to indicate success without a return value
     return ('', 204)
