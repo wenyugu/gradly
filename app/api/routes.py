@@ -142,7 +142,11 @@ def get_user(userID):
         grad['degree'] = graduation.degree.value
         grad['year'] = graduation.gradDate
         grad['major'] = graduation.major
-        grad['gpa'] = float(graduation.gpa)
+        if graduation.gpa is not None:
+            grad['gpa'] = float(graduation.gpa)
+        else:
+            grad['gpa'] = None
+
 
         grad['courses'] = []
         for course in courses:
