@@ -75,7 +75,7 @@ def delete_user(id: int) -> bool:
 def read_or_create_university(name: str) -> University:
     """
     Equivalent to:
-        INSERT INTO university (name) VALUES
+        INSERT INTO university (name) VALUES (
             SELECT '<name>'
             WHERE NOT EXISTS (SELECT 1 FROM university WHERE name = <name>);
         SELECT * FROM university WHERE name = <name>;

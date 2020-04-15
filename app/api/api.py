@@ -1,19 +1,16 @@
+import sqlite3
 from flask import Flask
 from config import Config
-from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
 
 
 app = Flask(__name__)
-# all config options are specified in an external file
-app.config.from_object(Config)
-db = SQLAlchemy(app)
-migrate = Migrate(app, db)
+con = sqlite3.connect('../db/app_sql.db', isolation_level=None)
+con.row_factory = sqlite3.Row  # supports mapping access by column name and index, iteration, etc
 
 
 @app.shell_context_processor
 def make_shell_context():
-    return {'db': db}
+    return {'con': db}
 
 
 # keep this at the bottom to avoid circular dependencies
