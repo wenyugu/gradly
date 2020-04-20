@@ -8,14 +8,14 @@ CREATE TABLE university (
 );
 CREATE TABLE position (
     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    "employerName" VARCHAR(255),
-    "jobTitle" VARCHAR(50) NOT NULL,
+    "employerName" VARCHAR(255) COLLATE NOCASE,
+    "jobTitle" VARCHAR(50) NOT NULL COLLATE NOCASE,
     FOREIGN KEY("employerName") REFERENCES employer (name)
 );
 CREATE TABLE graduate (
     "userID" INTEGER NOT NULL,
-    university VARCHAR(255) NOT NULL,
-    "gradDate" INTEGER NOT NULL,
+    university VARCHAR(255) NOT NULL COLLATE NOCASE,
+    year INTEGER NOT NULL,
     degree VARCHAR(10),
     major VARCHAR(255),
     gpa NUMERIC(3, 2),
@@ -51,8 +51,8 @@ CREATE TABLE employer (
 );
 CREATE TABLE course (
     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    "universityName" VARCHAR(255),
-    "courseTitle" VARCHAR(255) NOT NULL,
-    "courseNumber" VARCHAR(10) NOT NULL,
+    "universityName" VARCHAR(255) COLLATE NOCASE,
+    "courseTitle" VARCHAR(255) NOT NULL COLLATE NOCASE,
+    "courseNumber" VARCHAR(10) NOT NULL COLLATE NOCASE,
     FOREIGN KEY("universityName") REFERENCES university (name)
 );
