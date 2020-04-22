@@ -2,7 +2,7 @@ from sqlite3 import Row
 from typing import List
 
 from api import con
-from types import DegreeType, JobType, Industry
+from db_types import DegreeType, JobType, Industry
 
 
 def create_user(skills: List[str] = None) -> int:
@@ -32,7 +32,7 @@ def delete_user(id: int) -> bool:
 
 def create_university(name: str) -> Row:
     name = name.strip().title()  # Convert name to titlecase for consistency
-    con.execute('INSERT INTO university VALUES (?)', (name,))
+    con.execute('INSERT INTO university (name) VALUES (?)', (name,))
     return read_university(name)
 
 
@@ -41,6 +41,13 @@ def read_university(name: str) -> Row:
     name = name.strip()
     return con.execute('SELECT * FROM university WHERE name = ?', (name,)) \
               .fetchone()
+
+
+def read_or_create_university(name: str) -> Row:
+    ret = read_university(name)
+    if ret is None:
+        ret = create_university(name)
+    return ret
 
 
 def update_university(old_name: str, new_name: str) -> bool:
@@ -126,6 +133,13 @@ def read_employer(name: str) -> Row:
               .fetchone()
 
 
+def read_or_create_employer(name: str) -> Row:
+    ret = read_employer(name)
+    if ret is None:
+        ret = create_employer(name)
+    return ret
+
+
 def update_employer(old_name: str, new_name: str) -> bool:
     """Change the name of an employer and update all references to it."""
     pass
@@ -199,20 +213,10 @@ def create_graduation(
     if university is None:
         university = create_university(uni)
 
-    columns = ['userID', 'university', 'year']
-    values = [userID, university['name'], year]
-    if degree:
-        columns.append('degree')
-        values.append(degree.value())
-    if major:
-        columns.append('major')
-        values.append(major)
-    if gpa:
-        columns.append('gpa')
-        values.append(gpa)
-
-    con.execute('INSERT INTO graduate (:columns) VALUES (:values)',
-                {'columns': ', '.join(columns), 'values': ', '.join(values)})
+    con.execute("""INSERT INTO graduate (userID, university, year)
+                   VALUES (?, ?, ?)""",
+                (userID, uni, year))
+    update_graduation(userID, uni, year, degree=degree, major=major, gpa=gpa)
 
 
 def read_graduation(userID: int, uni: str, year: int) -> Row:
@@ -231,28 +235,52 @@ def update_graduation(userID: int, uni: str, year: int, **kwargs) -> bool:
     new_major = kwargs['major']
     new_gpa = kwargs['gpa']
 
-    if new_degree:
-        new_degree = 'degree = ' + new_degree
-    if new_major:
-        new_major = 'major = ' + new_major
-    if new_gpa:
-        new_gpa = 'gpa = ' + new_gpa
-    set_clause = ', '.join((new_degree, new_major, new_gpa))
-    if set_clause == '':
-        return False
-    n = con.execute(''' UPDATE graduate
-                        SET :set_clause
-                        WHERE userID = :user
-                        AND university = :uni
-                        AND year = :year
-                    ''',
-                    {
-                        'set_clause': set_clause,
-                        'user': userID,
-                        'uni': uni,
-                        'year': year,
-                    }) \
-           .rowcount
+    n = 0
+
+    if new_degree is not None:
+        if isinstance(new_degree, DegreeType):
+            new_degree = new_degree.value
+        n += con.execute('''UPDATE graduate SET degree = :degree
+                            WHERE userID = :user
+                            AND university = :uni
+                            AND year = :year
+                         ''',
+                         {
+                            'degree': new_degree,
+                            'user': userID,
+                            'uni': uni,
+                            'year': year,
+                         }) \
+                .rowcount
+
+    if new_major is not None:
+        n += con.execute('''UPDATE graduate SET major = :major
+                            WHERE userID = :user
+                            AND university = :uni
+                            AND year = :year
+                         ''',
+                         {
+                            'major': new_major,
+                            'user': userID,
+                            'uni': uni,
+                            'year': year,
+                         }) \
+                .rowcount
+
+    if new_gpa is not None:
+        n += con.execute('''UPDATE graduate SET gpa = :gpa
+                            WHERE userID = :user
+                            AND university = :uni
+                            AND year = :year
+                         ''',
+                         {
+                            'gpa': new_gpa,
+                            'user': userID,
+                            'uni': uni,
+                            'year': year,
+                         }) \
+                .rowcount
+
     return n > 0
 
 
@@ -275,23 +303,10 @@ def create_experience(
     type: JobType = None,
     rating: int = None,
 ):
-    columns = ['userID', 'positionID']
-    values = [userID, posID]
-    if industry:
-        columns.append('industry')
-        values.append(industry.value())
-    if salary:
-        columns.append('salary')
-        values.append(salary)
-    if type:
-        columns.append('type')
-        values.append(type.value())
-    if rating:
-        columns.append('rating')
-        values.append(rating)
-
-    con.execute('INSERT INTO experience (:columns) VALUES (:values)',
-                {'columns': ', '.join(columns), 'values': ', '.join(values)})
+    con.execute('INSERT INTO experience (userID, positionID) VALUES (?, ?)',
+                (userID, posID))
+    update_experience(userID, posID, industry=industry,
+                      salary=salary, type=type, rating=rating)
 
 
 def read_experience(userID: int, posID: int) -> Row:
@@ -307,23 +322,57 @@ def update_experience(userID: int, posID: int, **kwargs) -> bool:
     new_type = kwargs['type']
     new_rating = kwargs['rating']
 
+    n = 0
+
     if new_industry:
-        new_industry = 'industry = ' + new_industry.value()
+        if isinstance(new_industry, Industry):
+            new_industry = new_industry.value
+        n += con.execute('''UPDATE experience SET industry = :industry
+                            WHERE userID = :user
+                            AND positionID = :pos
+                         ''',
+                         {
+                            'industry': new_industry,
+                            'user': userID,
+                            'pos': posID,
+                         }) \
+                .rowcount
     if new_salary:
-        new_salary = 'salary = ' + new_salary
+        n += con.execute('''UPDATE experience SET salary = :salary
+                            WHERE userID = :user
+                            AND positionID = :pos
+                         ''',
+                         {
+                            'salary': new_salary,
+                            'user': userID,
+                            'pos': posID,
+                         }) \
+                .rowcount
     if new_type:
-        new_type = 'type = ' + new_type.value()
+        if isinstance(new_type, JobType):
+            new_type = new_type.value
+        n += con.execute('''UPDATE experience SET type = :type
+                            WHERE userID = :user
+                            AND positionID = :pos
+                         ''',
+                         {
+                            'type': new_type,
+                            'user': userID,
+                            'pos': posID,
+                         }) \
+                .rowcount
     if new_rating:
-        new_rating = 'rating = ' + new_rating
-    set_clause = ', '.join((new_industry, new_salary, new_type, new_rating))
-    if set_clause == '':
-        return False
-    n = con.execute('''UPDATE experience
-                       SET :set_clause
-                       WHERE userID = :user
-                       AND positionID = :pos''',
-                    {'set_clause': set_clause, 'user': userID, 'pos': posID}) \
-           .rowcount
+        n += con.execute('''UPDATE experience SET rating = :rating
+                            WHERE userID = :user
+                            AND positionID = :pos
+                         ''',
+                         {
+                            'rating': new_rating,
+                            'user': userID,
+                            'pos': posID,
+                         }) \
+                .rowcount
+
     return n > 0
 
 
@@ -346,16 +395,3 @@ def remove_enrollment(userID: int, courseID: int) -> bool:
                        WHERE userID = ? AND courseID = ?''',
                     (userID, courseID)).rowcount
     return n > 0
-
-
-# Explicit transaction management
-def begin_transaction():
-    con.execute('BEGIN')
-
-
-def commit():
-    con.commit()
-
-
-def rollback():
-    con.rollback()

@@ -19,10 +19,10 @@ CREATE TABLE graduate (
     degree VARCHAR(10),
     major VARCHAR(255),
     gpa NUMERIC(3, 2),
-    PRIMARY KEY ("userID", university, "gradDate"),
+    PRIMARY KEY ("userID", university, year),
     FOREIGN KEY(university) REFERENCES university (name),
     FOREIGN KEY("userID") REFERENCES user (id),
-    CONSTRAINT degreetype CHECK (degree IN ('associates', 'bachelors', 'masters', 'phd'))
+    CONSTRAINT degreetype CHECK (degree IN ('associate', 'bachelor', 'master', 'phd'))
 );
 CREATE TABLE experience (
     "userID" INTEGER NOT NULL,

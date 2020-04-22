@@ -1,17 +1,20 @@
 import sqlite3
 from flask import Flask
-from config import Config
 
 
 app = Flask(__name__)
-con = sqlite3.connect('../db/app_sql.db', isolation_level=None)
-con.row_factory = sqlite3.Row  # supports mapping access by column name and index, iteration, etc
+con = sqlite3.connect('../db/app.db')
+# Default to autocommit mode.
+# Manage explicit transactions using 'BEGIN', 'COMMIT', and 'ROLLBACK'
+con.isolation_level = None
+# supports mapping access by column name and index, iteration, etc
+con.row_factory = sqlite3.Row
 
 
 @app.shell_context_processor
 def make_shell_context():
-    return {'con': db}
+    return {'con': con}
 
 
 # keep this at the bottom to avoid circular dependencies
-import routes, models
+import routes
