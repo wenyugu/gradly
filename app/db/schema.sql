@@ -12,7 +12,7 @@ CREATE TABLE position (
     "jobTitle" VARCHAR(50) NOT NULL COLLATE NOCASE,
     FOREIGN KEY("employerName") REFERENCES employer (name)
 );
-CREATE TABLE graduate (
+CREATE TABLE graduation (
     "userID" INTEGER NOT NULL,
     university VARCHAR(255) NOT NULL COLLATE NOCASE,
     year INTEGER NOT NULL,

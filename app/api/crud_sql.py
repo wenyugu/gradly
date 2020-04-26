@@ -213,7 +213,7 @@ def create_graduation(
     if university is None:
         university = create_university(uni)
 
-    con.execute("""INSERT INTO graduate (userID, university, year)
+    con.execute("""INSERT INTO graduation (userID, university, year)
                    VALUES (?, ?, ?)""",
                 (userID, uni, year))
     update_graduation(userID, uni, year, degree=degree, major=major, gpa=gpa)
@@ -221,7 +221,7 @@ def create_graduation(
 
 def read_graduation(userID: int, uni: str, year: int) -> Row:
     uni = uni.strip()
-    return con.execute('''SELECT * FROM graduate
+    return con.execute('''SELECT * FROM graduation
                           WHERE userID = ?
                           AND university = ?
                           AND year = ?''',
@@ -240,44 +240,44 @@ def update_graduation(userID: int, uni: str, year: int, **kwargs) -> bool:
     if new_degree is not None:
         if isinstance(new_degree, DegreeType):
             new_degree = new_degree.value
-        n += con.execute('''UPDATE graduate SET degree = :degree
+        n += con.execute('''UPDATE graduation SET degree = :degree
                             WHERE userID = :user
                             AND university = :uni
                             AND year = :year
                          ''',
                          {
-                            'degree': new_degree,
-                            'user': userID,
-                            'uni': uni,
-                            'year': year,
+                             'degree': new_degree,
+                             'user': userID,
+                             'uni': uni,
+                             'year': year,
                          }) \
                 .rowcount
 
     if new_major is not None:
-        n += con.execute('''UPDATE graduate SET major = :major
+        n += con.execute('''UPDATE graduation SET major = :major
                             WHERE userID = :user
                             AND university = :uni
                             AND year = :year
                          ''',
                          {
-                            'major': new_major,
-                            'user': userID,
-                            'uni': uni,
-                            'year': year,
+                             'major': new_major,
+                             'user': userID,
+                             'uni': uni,
+                             'year': year,
                          }) \
                 .rowcount
 
     if new_gpa is not None:
-        n += con.execute('''UPDATE graduate SET gpa = :gpa
+        n += con.execute('''UPDATE graduation SET gpa = :gpa
                             WHERE userID = :user
                             AND university = :uni
                             AND year = :year
                          ''',
                          {
-                            'gpa': new_gpa,
-                            'user': userID,
-                            'uni': uni,
-                            'year': year,
+                             'gpa': new_gpa,
+                             'user': userID,
+                             'uni': uni,
+                             'year': year,
                          }) \
                 .rowcount
 
@@ -286,7 +286,7 @@ def update_graduation(userID: int, uni: str, year: int, **kwargs) -> bool:
 
 def delete_graduation(userID: int, uni: str, year: int) -> bool:
     uni = uni.strip()
-    n = con.execute('''DELETE FROM graduate
+    n = con.execute('''DELETE FROM graduation
                        WHERE userID = ?
                        AND university = ?
                        AND year = ?''',
@@ -310,7 +310,7 @@ def create_experience(
 
 
 def read_experience(userID: int, posID: int) -> Row:
-    return con.execute('''SELECT FROM experience
+    return con.execute('''SELECT * FROM experience
                           WHERE userID = ? AND positionID = ?''',
                        (userID, posID)) \
               .fetchone()
@@ -332,9 +332,9 @@ def update_experience(userID: int, posID: int, **kwargs) -> bool:
                             AND positionID = :pos
                          ''',
                          {
-                            'industry': new_industry,
-                            'user': userID,
-                            'pos': posID,
+                             'industry': new_industry,
+                             'user': userID,
+                             'pos': posID,
                          }) \
                 .rowcount
     if new_salary:
@@ -343,9 +343,9 @@ def update_experience(userID: int, posID: int, **kwargs) -> bool:
                             AND positionID = :pos
                          ''',
                          {
-                            'salary': new_salary,
-                            'user': userID,
-                            'pos': posID,
+                             'salary': new_salary,
+                             'user': userID,
+                             'pos': posID,
                          }) \
                 .rowcount
     if new_type:
@@ -356,9 +356,9 @@ def update_experience(userID: int, posID: int, **kwargs) -> bool:
                             AND positionID = :pos
                          ''',
                          {
-                            'type': new_type,
-                            'user': userID,
-                            'pos': posID,
+                             'type': new_type,
+                             'user': userID,
+                             'pos': posID,
                          }) \
                 .rowcount
     if new_rating:
@@ -367,9 +367,9 @@ def update_experience(userID: int, posID: int, **kwargs) -> bool:
                             AND positionID = :pos
                          ''',
                          {
-                            'rating': new_rating,
-                            'user': userID,
-                            'pos': posID,
+                             'rating': new_rating,
+                             'user': userID,
+                             'pos': posID,
                          }) \
                 .rowcount
 
@@ -385,7 +385,8 @@ def delete_experience(userID: int, posID: int) -> bool:
 
 
 def add_enrollment(userID: int, courseID: int) -> bool:
-    n = con.execute('INSERT INTO enrollment VALUES (?, ?)', (userID, courseID)) \
+    n = con.execute('INSERT INTO enrollment VALUES (?, ?)',
+                    (userID, courseID)) \
            .rowcount
     return n > 0
 
