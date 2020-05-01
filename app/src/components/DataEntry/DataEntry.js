@@ -160,7 +160,6 @@ export default class DataEntry extends Component {
     }
 
     render() {
-        const { user, update } = this.props;
         return (
             <div>
                 {
@@ -194,7 +193,7 @@ export default class DataEntry extends Component {
                                                         menuPortalTarget={document.querySelector('body')}
                                                         styles={selectStyles}
                                                         options={institutionOptions}
-                                                        defaultValue={user ? this.getOption(user.education[idx].school) : null}
+                                                        defaultValue={this.user.education[idx] ? this.getOption(this.user.education[idx].school) : null}
                                                         onChange={this.handleEducationSelect('school', idx)}
                                                     />
                                                 </Form.Group>
@@ -208,7 +207,7 @@ export default class DataEntry extends Component {
                                                         menuPortalTarget={document.querySelector('body')}
                                                         styles={selectStyles}
                                                         options={degreeOptions}
-                                                        defaultValue={user ? this.getOption(user.education[idx].degree) : null}
+                                                        defaultValue={this.user.education[idx] ? this.getOption(this.user.education[idx].degree) : null}
                                                         onChange={this.handleEducationSelect('degree', idx)}
                                                     />
                                                 </Form.Group>
@@ -220,7 +219,7 @@ export default class DataEntry extends Component {
                                                                 placeholder="Major" 
                                                                 type="text"
                                                                 required
-                                                                value={user ? user.education[idx].major: this.state.education[idx].major}
+                                                                value={this.state.education[idx].major}
                                                                 onChange={this.handleEducationChange('major', idx)}
                                                             />
                                                             <Form.Control.Feedback type="invalid">
@@ -235,7 +234,7 @@ export default class DataEntry extends Component {
                                                                 placeholder="GPA: Optional"
                                                                 type="number"
                                                                 step="0.01"
-                                                                value={user ? user.education[idx].gpa : (this.state.education[idx].gpa || '')}
+                                                                value={this.state.education[idx].gpa || ''}
                                                                 onChange={this.handleEducationChange('gpa', idx)}
                                                             />
                                                         </Form.Group>
@@ -250,7 +249,7 @@ export default class DataEntry extends Component {
                                                         menuPortalTarget={document.querySelector('body')}
                                                         styles={selectStyles}
                                                         options={yearOptions}
-                                                        defaultValue={user ? this.getOption(user.education[idx].year) : null}
+                                                        defaultValue={this.user.education[idx] ? this.getOption(this.user.education[idx].year) : null}
                                                         onChange={this.handleEducationSelect('year', idx)}
                                                     />
                                                 </Form.Group>
@@ -266,7 +265,7 @@ export default class DataEntry extends Component {
                                                                         <Form.Control 
                                                                             placeholder="Ex. Database Systems" 
                                                                             type='text'
-                                                                            value={user ? user.education[idx].courses[index].name : this.state.education[idx].courses[index].name}
+                                                                            value={this.state.education[idx].courses[index].name}
                                                                             onChange={this.handleCourseChange('name', idx, index)}
                                                                         />
                                                                     </Form.Group>
@@ -277,7 +276,7 @@ export default class DataEntry extends Component {
                                                                         <Form.Control 
                                                                             placeholder="Ex. CS411" 
                                                                             type='text'
-                                                                            value={user ? user.education[idx].courses[index].num : this.state.education[idx].courses[index].num}
+                                                                            value={this.state.education[idx].courses[index].num}
                                                                             onChange={this.handleCourseChange('num', idx, index)}
                                                                         />
                                                                     </Form.Group>
@@ -312,7 +311,7 @@ export default class DataEntry extends Component {
                                                         placeholder="Ex. Google" 
                                                         type='text'
                                                         required
-                                                        value={user ? user.experience[idx].employer : this.state.experience[idx].employer}
+                                                        value={this.state.experience[idx].employer}
                                                         onChange={this.handleExperienceChange('employer', idx)}
                                                     />
                                                     <Form.Control.Feedback type="invalid">
@@ -325,7 +324,7 @@ export default class DataEntry extends Component {
                                                         placeholder="Ex. Software Engineer" 
                                                         type='text'
                                                         required
-                                                        value={user ? user.experience[idx].title : this.state.experience[idx].title}
+                                                        value={this.state.experience[idx].title}
                                                         onChange={this.handleExperienceChange('title', idx)}
                                                     />
                                                     <Form.Control.Feedback type="invalid">
@@ -342,7 +341,7 @@ export default class DataEntry extends Component {
                                                         menuPortalTarget={document.querySelector('body')}
                                                         styles={selectStyles}
                                                         options={empOptions}
-                                                        defaultValue={user ? this.getOption(user.experience[idx].type) : null}
+                                                        defaultValue={this.user.experience[idx] ? this.getOption(this.user.experience[idx].type) : null}
                                                         onChange={this.handleExperienceSelect('type', idx)}
                                                     />
                                                 </Form.Group>
@@ -354,7 +353,7 @@ export default class DataEntry extends Component {
                                                         menuPortalTarget={document.querySelector('body')}
                                                         styles={selectStyles}
                                                         options={industryOptions}
-                                                        defaultValue={user ? this.getOption(user.experience[idx].industry) : null}
+                                                        defaultValue={this.user.experience[idx] ? this.getOption(this.user.experience[idx].industry) : null}
                                                         onChange={this.handleExperienceSelect('industry', idx)}
                                                     />
                                                 </Form.Group>
@@ -363,7 +362,7 @@ export default class DataEntry extends Component {
                                                     <Form.Control 
                                                         placeholder='USD per year'
                                                         type='number'
-                                                        value={user ? this.state.experience[idx].salary : this.state.experience[idx].salary}
+                                                        value={this.state.experience[idx].salary}
                                                         onChange={this.handleExperienceChange('salary', idx)}
                                                     />
                                                     <Form.Control.Feedback type="invalid">
@@ -372,7 +371,7 @@ export default class DataEntry extends Component {
                                                 </Form.Group>
                                                 <Form.Group>
                                                     <Form.Label>Rating (0-10)</Form.Label>
-                                                    <RangeSlider value={user ? this.state.experience[idx].rating : this.state.experience[idx].rating} onChange={this.handleExperienceChange('rating', idx)} max={10} />
+                                                    <RangeSlider value={this.state.experience[idx].rating} onChange={this.handleExperienceChange('rating', idx)} max={10} />
                                                 </Form.Group>
                                             </Fragment>
                                         ))
@@ -396,7 +395,7 @@ export default class DataEntry extends Component {
                                             menuPortalTarget={document.querySelector('body')}
                                             styles={selectStyles}
                                             options={skillsOptions}
-                                            defaultValue={user ? this.getOption(user.skills) : null}
+                                            defaultValue={this.user.skills ? this.getOption(this.user.skills) : null}
                                             onChange={this.handleSkillsChange}
                                         />
                                     </Form.Group>
