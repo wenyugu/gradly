@@ -254,6 +254,7 @@ def update_graduation(userID: int, uni: str, year: int, **kwargs) -> bool:
                 .rowcount
 
     if new_major is not None:
+        new_major = new_major.strip().title()
         n += con.execute('''UPDATE graduation SET major = :major
                             WHERE userID = :user
                             AND university = :uni

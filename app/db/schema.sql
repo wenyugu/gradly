@@ -17,7 +17,7 @@ CREATE TABLE graduation (
     university VARCHAR(255) NOT NULL COLLATE NOCASE,
     year INTEGER NOT NULL,
     degree VARCHAR(10),
-    major VARCHAR(255),
+    major VARCHAR(255) COLLATE NOCASE,
     gpa NUMERIC(3, 2),
     PRIMARY KEY ("userID", university, year),
     FOREIGN KEY(university) REFERENCES university (name),
