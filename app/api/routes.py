@@ -29,18 +29,37 @@ def user(userID=None):
     abort(405)
 
 
-@app.route('/api/query/careers', endpoint='careers', methods=['GET'])
-@app.route('/api/query/courses', endpoint='courses', methods=['GET'])
-def query():
-    args = request.args
+@app.route('/api/query/careers', methods=['GET'])
+def careers():
+    """Endpoint to get relevant job recommendations based on user's background.
 
-    if request.endpoint == 'careers':
-        user = args.get('userID')
-        if user == None:
-            abort(400, 'Please provide a userID ("careers?userID=<id>")')
-        return get_job_for_education_background(user)
-    else:  # endpoint == 'courses'
-        university = args.get('university')
-        industry = args.get('industry')
-        title = args.get('title')
-        return get_classes_for_career(industry, title, university)
+    Returns a JSON object with a status message ('OK' if everything is fine) and
+    a list of jobs, sorted by relevance.
+    """
+    user = request.args.get('userID')
+    if user == None:
+        abort(400, 'Please provide a userID ("careers?userID=<id>")')
+    return get_job_for_education_background(user)
+
+
+@app.route('/api/query/courses', methods=['GET'])
+def courses():
+    """Endpoint to get relevant courses by career path.
+
+    Industry of interest is passes as a query parameter. Industry names must
+    match the standardized list of industries, with special characters (and
+    whitespace) encoded using the standard HTML encoding sequences. Spaces may
+    alternatively be replaced by '+'
+
+    Optionally, the desired job title may be provided, following the same
+    encoding scheme as above. A university name may also be specified to limit
+    the results to a particular school.
+
+    Returns a JSON object containing lists of courses keyed by the university
+    which offers them.
+    """
+    args = request.args
+    industry = args['industry']  # required
+    title = args.get('title')
+    university = args.get('university')
+    return get_classes_for_career(industry, title, university)

@@ -8,7 +8,7 @@ import util
 
 from api import app, con
 from db_types import DegreeType, JobType, Industry
-from user import get_user
+from logic.user import get_user
 
 # take a user’s university
 # return a list of job titles that other users with similar education have reported
@@ -35,7 +35,7 @@ def get_job_for_education_background(userID: int):
 
     background = []
     for edu in userInfo['education']:
-        uni = edu['university']
+        uni = edu['school']
         degree = edu.get('degree')
         major = edu.get('major')
         background.append((uni, degree, major))
@@ -81,7 +81,7 @@ def get_job_for_education_background(userID: int):
         weight = (v[0] + 2 * v[1] + 3 * v[2]) / 6
         ranked_results.append((k, weight))
 
-    response['results'] = sorted(ranked_results, key=lambda x: x[1], reversed=True)
+    response['results'] = sorted(ranked_results, key=lambda x: x[1], reverse=True)
     return response
 
 
@@ -144,5 +144,4 @@ def get_classes_for_career(industry: str, job: str = None, university: str = Non
     for k, v in results.items():
         results[k] = sorted(v)
 
-    # return an ordered dictionary sorted by university name
-    return OrderedDict(sorted(results, key=lambda x: x[0]))
+    return results
