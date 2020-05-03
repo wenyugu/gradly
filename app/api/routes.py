@@ -43,5 +43,4 @@ def query():
         university = args.get('university')
         industry = args.get('industry')
         title = args.get('title')
-        type = args.get('type')
-        return get_classes_for_career(university, industry, title, type)
+        return get_classes_for_career(industry, title, university)

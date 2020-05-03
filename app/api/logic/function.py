@@ -1,4 +1,4 @@
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 from flask import abort
 from sqlite3 import Row
 from typing import Any, Dict, List, Tuple, Union
@@ -44,7 +44,7 @@ def get_job_for_education_background(userID: int):
         response['status'] = 'No education history found'
         return response
 
-    results = defaultdict(Dict((0,0,0)))
+    results = defaultdict(lambda: [0,0,0])
     for uni, degree, major in background:
         # Major is not a required DB field, but this query is pretty meaningless
         # without knowing the major, so we will skip it
@@ -87,12 +87,62 @@ def get_job_for_education_background(userID: int):
 
 # take a desired job title + industry
 # return a list of courses that people who have that (or similar) job took
-def get_classes_for_career(job: str, industry: str):
-    return con.execute('''SELECT c.courseTitle
-                          FROM experience eee NATURAL JOIN enrollment ee NATURAL JOIN experience e, position p, course c
-                          WHERE e.PositionID = p.id
-                          AND p.jobTitle = ?
-                          AND c.id = ee.courseID
-                          AND eee.industry = ?
-                       ''', (job, industry,)) \
-              .fetchall()
+def get_classes_for_career(industry: str, job: str = None, university: str = None):
+    """Return a list of potential classes related to the given industry.
+
+    Classes are filtered by users who work in a particular position/industry
+    who have reported taking those classes.
+
+    If a specific job title is given, only users who have held that title are
+    considered.
+
+    A university name may be provided to restrict results to a particular
+    university.
+
+    Returns a dictionary mapping university names to a list of course numbers
+    and titles, sorted aplhabetically
+    """
+    try:
+        _ = Industry(industry).value
+    except ValueError:
+        abort(400, 'Invalid industry: {}'.format(industry))
+
+    params = [industry]
+    query_join_position = ''
+    query_filter_title = ''
+    query_filter_university = ''
+
+    if job is not None:
+        params.append(job)
+        query_join_position = 'JOIN position p ON e.positionID = p.id'
+        query_filter_title = 'AND jobTitle = ?'
+
+    if university is not None:
+        params.append(university)
+        query_filter_university = 'AND university = ?'
+
+    query = '''SELECT courseTitle, courseNumber, universityName as university
+               FROM (experience NATURAL JOIN enrollment) e
+               JOIN course c
+               ON e.courseID = c.id
+               {}
+               WHERE industry = ?
+               {}
+               {}
+            '''.format(query_join_position, query_filter_title, query_filter_university)
+
+    rows = con.execute(query, params).fetchall()
+
+    # build a dictionary mapping universities to courses
+    # (deduplicating by using a set)
+    results = defaultdict(set)
+    for row in rows:
+        course = row['courseNumber'] + ': ' + row['courseTitle']
+        results[row['university']].add(course)
+
+    # for each university (key k), sort the list of courses
+    for k, v in results.items():
+        results[k] = sorted(v)
+
+    # return an ordered dictionary sorted by university name
+    return OrderedDict(sorted(results, key=lambda x: x[0]))
