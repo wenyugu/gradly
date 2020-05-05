@@ -148,15 +148,19 @@ def get_classes_for_career(industry: str, job: str = None, university: str = Non
 
     rows = con.execute(query, params).fetchall()
 
-    # build a dictionary mapping universities to courses
-    # (deduplicating by using a set)
-    results = defaultdict(set)
+    # build a dictionary mapping universities to courses, with each course having
+    # an associate count (as a relevance metric)
+    results = defaultdict(lambda: defaultdict(int))
     for row in rows:
         course = row['courseNumber'] + ': ' + row['courseTitle']
-        results[row['university']].add(course)
+        results[row['university']][course] += 1
 
-    # for each university (key k), sort the list of courses
+    # for each university (key k), sort the list of courses by relevance
     for k, v in results.items():
-        results[k] = sorted(v)
+        results[k] = list(map(lambda e: e[0],
+                              sorted(v.items(),
+                                     key=lambda x: x[1],
+                                     reverse=True)
+                             ))
 
     return results
