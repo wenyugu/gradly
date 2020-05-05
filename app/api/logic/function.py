@@ -137,9 +137,9 @@ def get_classes_for_career(industry: str, job: str = None, university: str = Non
     query_filter_university = ''
 
     if job is not None:
-        params.append(job)
-        query_join_position = 'JOIN position p ON e.positionID = p.id'
-        query_filter_title = 'AND jobTitle = ?'
+        params.append(f'%{job}%')
+        query_join_position = 'JOIN position p ON ex.positionID = p.id'
+        query_filter_title = 'AND jobTitle LIKE ?'
 
     if university is not None:
         params.append(university)
