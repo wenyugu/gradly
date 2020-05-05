@@ -39,15 +39,11 @@ def get_job_for_education_background(userID: int):
     The results are ranked by the weighted average of these dimensions,
     with relative weights of 3, 1, 2 respectively (i.e. people in your major are
     better indicators than anyone at your university, which itself is a better
-    indicator than anyone with a bachelors degree).
+    indicator than just anyone with a bachelors degree).
     """
 
     # Raises a 404 if the user is not found. That is exactly what we want
-    userInfo = get_user(userID)
-
-    response = {'status': 'OK',
-                'results': [],
-               }
+    _ = get_user(userID)
 
     # Alright, this is a bit complicated. We have two primary queries here: A
     # and B.
@@ -59,7 +55,8 @@ def get_job_for_education_background(userID: int):
     # we join with experience to gain access to the postionID column, which we
     # then use to join with position, which gives us jobTitle and employerName.
     # We filter this by users that still exist in the table (in case a user was
-    # deleted without removing their experience).
+    # deleted without removing their experience). Since this query does not
+    # depend on variables, we can store it as a view to simplify the full query.
     #
     # Next, we join A and B on the condition that the userID is different,
     # essentially getting a cross product of our user with the work experience
@@ -72,25 +69,31 @@ def get_job_for_education_background(userID: int):
     #
     # Finally, we select the job title and employer name concatenated together
     # and the custom weight value and sort by descending weight.
+
+    # NOTE: to change this view, the old version must first be DROP'ed
+    # as views are read-only in SQLite
+    con.execute('''CREATE VIEW IF NOT EXISTS all_jobs
+                   (jobTitle, employerName, userID, university, degree, major)
+                   AS
+                   SELECT jobTitle, employerName, userID, university, degree, major
+                   FROM (graduation NATURAL JOIN experience) e
+                   JOIN position p
+                   ON e.positionID = p.id
+                   WHERE userID in (SELECT id FROM user)
+                ''')
+
     rows = con.execute(
         '''
         SELECT jobTitle || ', ' || employerName as job,
         CAREER_WEIGHT(
             a.major, a.university, a.degree, b.major, b.university, b.degree
         ) as weight
-        FROM
-        (
-            SELECT jobTitle, employerName, userID, university, degree, major
-            FROM (graduation NATURAL JOIN experience) e
-            JOIN position p
-            ON e.positionID = p.id
-            WHERE userID in (SELECT id FROM user)
-        ) a
+        FROM all_jobs a
         JOIN
         (
             SELECT userID, university, degree, major
             FROM graduation
-            WHERE userID = :uid
+            WHERE userID = ?
         ) b
         ON a.userID <> b.userID
         GROUP BY jobTitle, employerName
@@ -103,8 +106,7 @@ def get_job_for_education_background(userID: int):
     ).fetchall()
 
     results = [{'role': r['job'], 'relevance': r['weight']} for r in rows]
-    response['results'] = results
-    return response
+    return {'status': 'OK', 'results': results}
 
 
 # take a desired job title + industry
@@ -143,7 +145,8 @@ def get_classes_for_career(industry: str, job: str = None, university: str = Non
         params.append(university)
         query_filter_university = 'AND university = ?'
 
-    query = '''SELECT courseTitle, courseNumber, universityName as university
+    query = '''SELECT courseNumber || ': ' || courseTitle as course,
+                      universityName as university
                FROM (experience NATURAL JOIN enrollment) e
                JOIN course c
                ON e.courseID = c.id
@@ -159,8 +162,7 @@ def get_classes_for_career(industry: str, job: str = None, university: str = Non
     # an associate count (as a relevance metric)
     results = defaultdict(lambda: defaultdict(int))
     for row in rows:
-        course = row['courseNumber'] + ': ' + row['courseTitle']
-        results[row['university']][course] += 1
+        results[row['university']][row['course']] += 1
 
     # for each university (key k), sort the list of courses by relevance
     for k, v in results.items():
@@ -171,3 +173,16 @@ def get_classes_for_career(industry: str, job: str = None, university: str = Non
                              ))
 
     return results
+
+
+def get_popular_companies(school: str, limit: int):
+    rows = con.execute('''SELECT employerName, COUNT(userID) as cnt
+                          FROM position NATURAL JOIN graduation
+                          WHERE university = ?
+                          GROUP BY employerName
+                          ORDER BY cnt DESC
+                          LIMIT ?
+                       ''', (school, limit)) \
+              .fetchall()
+    results = list(map(lambda x: x['employerName'], rows))
+    return {'status': 'OK', 'results': results}

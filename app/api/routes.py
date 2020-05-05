@@ -2,7 +2,9 @@ from flask import request, abort
 
 from api import app
 from logic.user import new_user, get_user, update_user, delete_user
-from logic.function import get_job_for_education_background, get_classes_for_career
+from logic.function import get_classes_for_career, \
+                           get_job_for_education_background, \
+                           get_popular_companies
 
 
 @app.route('/api/user/new', endpoint='new_user', methods=['POST'])
@@ -63,6 +65,13 @@ def courses():
     title = args.get('title')
     university = args.get('university')
     return get_classes_for_career(industry, title, university)
+
+
+@app.route('/api/query/popular_companies', methods=['GET'])
+def popular_companies():
+    uni = request.args['school']
+    limit = request.args.get('limit') or 10
+    return get_popular_companies(uni, limit)
 
 
 # TODO: add endpoint to get list of all skills for use in form
