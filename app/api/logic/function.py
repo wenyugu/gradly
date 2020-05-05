@@ -10,6 +10,21 @@ from api import app, con
 from db_types import DegreeType, JobType, Industry
 from logic.user import get_user
 
+
+class CareerWeight:
+    def __init__(self):
+        self.weight = 0
+
+    def step(self, m1, u1, d1, m2, u2, d2):
+        self.weight += 3 * (m1 == m2) + 2 * (u1 == u2) + (d1 == d2)
+
+    def finalize(self):
+        return self.weight
+
+
+con.create_aggregate("CAREER_WEIGHT", 6, CareerWeight)
+
+
 # take a user’s university
 # return a list of job titles that other users with similar education have reported
 def get_job_for_education_background(userID: int):
@@ -22,8 +37,9 @@ def get_job_for_education_background(userID: int):
     For each match, the weight of the result is increased. Weights are computed
     in three dimensions: major matches, degree matches, and university matches.
     The results are ranked by the weighted average of these dimensions,
-    with relative weights of 1, 2, 3 respectively (i.e. matches from the same
-    university count more than just same major).
+    with relative weights of 3, 1, 2 respectively (i.e. people in your major are
+    better indicators than anyone at your university, which itself is a better
+    indicator than anyone with a bachelors degree).
     """
 
     # Raises a 404 if the user is not found. That is exactly what we want
@@ -33,55 +49,54 @@ def get_job_for_education_background(userID: int):
                 'results': [],
                }
 
-    background = []
-    for edu in userInfo['education']:
-        uni = edu['school']
-        degree = edu.get('degree')
-        major = edu.get('major')
-        background.append((uni, degree, major))
+    # Join `graduation`, `experience`, and `position` to get records for
+    # every postion held by each user (other than the given one) with information
+    # about each of the user's graduations. Thus, if user A graduated from S and R
+    # and held jobs X and Y, then we will see rows such as
+    #   A S X
+    #   A S Y
+    #   A R X
+    #   A R Y
+    # We are interested in the job (S and R above) as well as the degree to
+    # which the user's education matches our own. We use a custom aggregate
+    # function which takes the major, university, and degree type of two users
+    # and outputs a number from 0 to 6, where 0 indicates no match and 6 is
+    # a full match.
+    # We exclude aggregated rows which have a zero sum, as they did not match
+    # the user in any way. The final row returned includes the job (title
+    # and employer) and the computed weight for this particular education set.
+    rows = con.execute(
+        '''
+        SELECT jobTitle || ', ' || employerName as job,
+        CAREER_WEIGHT(
+            a.major, a.university, a.degree, b.major, b.university, b.degree
+        ) as weight
+        FROM
+        (
+            SELECT jobTitle, employerName, userID, university, degree, major
+            FROM (graduation NATURAL JOIN experience) e
+            JOIN position p
+            ON e.positionID = p.id
+            WHERE userID in (SELECT id FROM user)
+        ) a
+        JOIN
+        (
+            SELECT userID, university, degree, major
+            FROM graduation
+            WHERE userID = :uid
+        ) b
+        ON a.userID <> b.userID
+        GROUP BY jobTitle, employerName
+        HAVING CAREER_WEIGHT(
+            a.major, a.university, a.degree, b.major, b.university, b.degree
+        ) > 0
+        ORDER BY weight DESC
+        ''',
+        (userID,)
+    ).fetchall()
 
-    if len(background) == 0:
-        response['status'] = 'No education history found'
-        return response
-
-    results = defaultdict(lambda: [0,0,0])
-    for uni, degree, major in background:
-        # Major is not a required DB field, but this query is pretty meaningless
-        # without knowing the major, so we will skip it
-        if major is None:
-            response['status'] = 'No major specified for at least one entry'
-            continue
-
-        # Get all positions where the user's major matches. Also return the
-        # university and degree for later ranking
-        rows = con.execute('''SELECT jobTitle, employerName, university, degree
-                              FROM (graduation
-                              NATURAL JOIN experience) e
-                              JOIN position p
-                              ON e.positionID = p.id
-                              WHERE userID <> ?
-                              AND major = ?
-                           ''', (userID, major)) \
-                  .fetchall()
-
-        for row in rows:
-            career = row['jobTitle'] + ', ' + row['employerName']
-            # We know the major matches. This line also inserts the career if it
-            # didn't already exist
-            results[career][0] += 1
-
-            if degree is not None and row['degree'] == degree:
-                results[career][1] += 1
-
-            if uni is not None and row['university'] == uni:
-                results[career][2] += 1
-
-    ranked_results = []
-    for k, v in results.items():
-        weight = (v[0] + 2 * v[1] + 3 * v[2]) / 6
-        ranked_results.append((k, weight))
-
-    response['results'] = sorted(ranked_results, key=lambda x: x[1], reverse=True)
+    results = [{'role': r['job'], 'relevance': r['weight']} for r in rows]
+    response['results'] = results
     return response
 
 

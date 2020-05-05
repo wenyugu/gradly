@@ -63,3 +63,6 @@ def courses():
     title = args.get('title')
     university = args.get('university')
     return get_classes_for_career(industry, title, university)
+
+
+# TODO: add endpoint to get list of all skills for use in form
