@@ -49,22 +49,29 @@ def get_job_for_education_background(userID: int):
                 'results': [],
                }
 
-    # Join `graduation`, `experience`, and `position` to get records for
-    # every postion held by each user (other than the given one) with information
-    # about each of the user's graduations. Thus, if user A graduated from S and R
-    # and held jobs X and Y, then we will see rows such as
-    #   A S X
-    #   A S Y
-    #   A R X
-    #   A R Y
-    # We are interested in the job (S and R above) as well as the degree to
-    # which the user's education matches our own. We use a custom aggregate
-    # function which takes the major, university, and degree type of two users
-    # and outputs a number from 0 to 6, where 0 indicates no match and 6 is
-    # a full match.
-    # We exclude aggregated rows which have a zero sum, as they did not match
-    # the user in any way. The final row returned includes the job (title
-    # and employer) and the computed weight for this particular education set.
+    # Alright, this is a bit complicated. We have two primary queries here: A
+    # and B.
+    #
+    # Query B is easy, it just gets the User and Degree information of the user
+    # we want to look up from the graduation table.
+    #
+    # Query A is harder. We start with graduation for the same info as B. Then
+    # we join with experience to gain access to the postionID column, which we
+    # then use to join with position, which gives us jobTitle and employerName.
+    # We filter this by users that still exist in the table (in case a user was
+    # deleted without removing their experience).
+    #
+    # Next, we join A and B on the condition that the userID is different,
+    # essentially getting a cross product of our user with the work experience
+    # of every other (current) user.
+    #
+    # We then group by the job info and aggregate using our custom weight
+    # function which takes the education info of our user and the other user
+    # to determine a relationship factor. We exclude the groups (jobs) which
+    # have no relationship.
+    #
+    # Finally, we select the job title and employer name concatenated together
+    # and the custom weight value and sort by descending weight.
     rows = con.execute(
         '''
         SELECT jobTitle || ', ' || employerName as job,
