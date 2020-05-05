@@ -63,7 +63,7 @@ def delete_university(name: str) -> bool:
 
 def create_course(name: str, num: str, uni: str) -> int:
     # standardize course name and number before inserting
-    name = name.strip().title()
+    name = name.strip()
     num = num.strip().upper()
 
     university = read_university(uni)
@@ -110,9 +110,13 @@ def find_course(name: str, num: str, uni: str) -> Row:
     return result  # may be None, but that's ok if none of the cases match
 
 
-def update_course(id: int, **kwargs) -> bool:
+def update_course(id: int, name: str, num: str) -> bool:
     """Change the name/number of a course and update all references to it."""
-    pass
+    n = con.execute('''UPDATE course
+                       SET courseTitle = :name, courseNumber = :num
+                       WHERE id = :id
+                    ''', {'id': id, 'name': name, 'num': num}).rowcount
+    return n > 0
 
 
 def delete_course(id: int) -> bool:
@@ -231,9 +235,9 @@ def read_graduation(userID: int, uni: str, year: int) -> Row:
 
 def update_graduation(userID: int, uni: str, year: int, **kwargs) -> bool:
     uni = uni.strip()
-    new_degree = kwargs['degree']
-    new_major = kwargs['major']
-    new_gpa = kwargs['gpa']
+    new_degree = kwargs.get('degree')
+    new_major = kwargs.get('major')
+    new_gpa = kwargs.get('gpa')
 
     n = 0
 
@@ -318,10 +322,10 @@ def read_experience(userID: int, posID: int) -> Row:
 
 
 def update_experience(userID: int, posID: int, **kwargs) -> bool:
-    new_industry = kwargs['industry']
-    new_salary = kwargs['salary']
-    new_type = kwargs['type']
-    new_rating = kwargs['rating']
+    new_industry = kwargs.get('industry')
+    new_salary = kwargs.get('salary')
+    new_type = kwargs.get('type')
+    new_rating = kwargs.get('rating')
 
     n = 0
 
@@ -390,6 +394,13 @@ def add_enrollment(userID: int, courseID: int) -> bool:
                     (userID, courseID)) \
            .rowcount
     return n > 0
+
+
+def check_enrollment(userID: int, courseID: int) -> bool:
+    r = con.execute('''SELECT * FROM enrollment
+                       WHERE userID = ? AND courseID = ?''',
+                    (userID, courseID)).fetchall()
+    return len(r) > 0
 
 
 def remove_enrollment(userID: int, courseID: int) -> bool:
