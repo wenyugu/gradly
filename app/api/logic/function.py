@@ -49,9 +49,9 @@ def get_job_for_education_background(userID: int):
     # and B.
     #
     # Query B is easy, it just gets the User and Degree information of the user
-    # we want to look up from the graduation table.
+    # we want to look up from the education table.
     #
-    # Query A is harder. We start with graduation for the same info as B. Then
+    # Query A is harder. We start with education for the same info as B. Then
     # we join with experience to gain access to the postionID column, which we
     # then use to join with position, which gives us jobTitle and employerName.
     # We filter this by users that still exist in the table (in case a user was
@@ -76,7 +76,7 @@ def get_job_for_education_background(userID: int):
                    (jobTitle, employerName, userID, university, degree, major)
                    AS
                    SELECT jobTitle, employerName, userID, university, degree, major
-                   FROM (graduation NATURAL JOIN experience) e
+                   FROM (education NATURAL JOIN experience) e
                    JOIN position p
                    ON e.positionID = p.id
                    WHERE userID in (SELECT id FROM user)
@@ -92,7 +92,7 @@ def get_job_for_education_background(userID: int):
         JOIN
         (
             SELECT userID, university, degree, major
-            FROM graduation
+            FROM education
             WHERE userID = ?
         ) b
         ON a.userID <> b.userID
@@ -147,7 +147,9 @@ def get_classes_for_career(industry: str, job: str = None, university: str = Non
 
     query = '''SELECT courseNumber || ': ' || courseTitle as course,
                       universityName as university
-               FROM (experience NATURAL JOIN enrollment) e
+               FROM (experience NATURAL JOIN education) ex
+               JOIN enrollment e
+               ON e.educationID = ex.id
                JOIN course c
                ON e.courseID = c.id
                {}
@@ -177,7 +179,9 @@ def get_classes_for_career(industry: str, job: str = None, university: str = Non
 
 def get_popular_companies(school: str, limit: int):
     rows = con.execute('''SELECT employerName, COUNT(userID) as cnt
-                          FROM position NATURAL JOIN graduation
+                          FROM position p JOIN experience ex
+                          ON p.id = ex.positionID
+                          NATURAL JOIN education
                           WHERE university = ?
                           GROUP BY employerName
                           ORDER BY cnt DESC

@@ -31,7 +31,7 @@ def delete_user(id: int) -> bool:
 
 
 def create_university(name: str) -> Row:
-    name = name.strip().title()  # Convert name to titlecase for consistency
+    name = name.strip()
     con.execute('INSERT INTO university (name) VALUES (?)', (name,))
     return read_university(name)
 
@@ -156,7 +156,7 @@ def delete_employer(name: str) -> bool:
 
 
 def create_position(employer: str, title: str) -> int:
-    title = title.strip().title()
+    title = title.strip()
     emp = read_employer(employer)
     if emp is None:
         emp = create_employer(employer)
@@ -205,27 +205,33 @@ def delete_position(id: int) -> bool:
     return n > 0
 
 
-def create_graduation(
+def create_education(
     userID: int,
     uni: str,
     year: int,
     degree: DegreeType = None,
     major: str = None,
     gpa: float = None,
-):
+) -> int:
     university = read_university(uni)
     if university is None:
         university = create_university(uni)
 
-    con.execute("""INSERT INTO graduation (userID, university, year)
-                   VALUES (?, ?, ?)""",
-                (userID, uni, year))
-    update_graduation(userID, uni, year, degree=degree, major=major, gpa=gpa)
+    id = con.execute('''INSERT INTO education (userID, university, year)
+                        VALUES (?, ?, ?)''',
+                     (userID, uni, year)) \
+            .lastrowid
+    update_education(id, degree=degree, major=major, gpa=gpa)
+    return id
 
 
-def read_graduation(userID: int, uni: str, year: int) -> Row:
+def read_education(id: int) -> Row:
+    return con.execute('SELECT * FROM education WHERE id = ?', (id,)).fetchone()
+
+
+def find_education(userID: int, uni: str, year: int) -> Row:
     uni = uni.strip()
-    return con.execute('''SELECT * FROM graduation
+    return con.execute('''SELECT * FROM education
                           WHERE userID = ?
                           AND university = ?
                           AND year = ?''',
@@ -233,8 +239,7 @@ def read_graduation(userID: int, uni: str, year: int) -> Row:
               .fetchone()
 
 
-def update_graduation(userID: int, uni: str, year: int, **kwargs) -> bool:
-    uni = uni.strip()
+def update_education(id: int, **kwargs) -> bool:
     new_degree = kwargs.get('degree')
     new_major = kwargs.get('major')
     new_gpa = kwargs.get('gpa')
@@ -244,59 +249,41 @@ def update_graduation(userID: int, uni: str, year: int, **kwargs) -> bool:
     if new_degree is not None:
         if isinstance(new_degree, DegreeType):
             new_degree = new_degree.value
-        n += con.execute('''UPDATE graduation SET degree = :degree
-                            WHERE userID = :user
-                            AND university = :uni
-                            AND year = :year
+        n += con.execute('''UPDATE education SET degree = :degree
+                            WHERE id = :id
                          ''',
                          {
                              'degree': new_degree,
-                             'user': userID,
-                             'uni': uni,
-                             'year': year,
+                             'id': id
                          }) \
                 .rowcount
 
     if new_major is not None:
         new_major = new_major.strip().title()
-        n += con.execute('''UPDATE graduation SET major = :major
-                            WHERE userID = :user
-                            AND university = :uni
-                            AND year = :year
+        n += con.execute('''UPDATE education SET major = :major
+                            WHERE id = :id
                          ''',
                          {
                              'major': new_major,
-                             'user': userID,
-                             'uni': uni,
-                             'year': year,
+                             'id': id
                          }) \
                 .rowcount
 
     if new_gpa is not None:
-        n += con.execute('''UPDATE graduation SET gpa = :gpa
-                            WHERE userID = :user
-                            AND university = :uni
-                            AND year = :year
+        n += con.execute('''UPDATE education SET gpa = :gpa
+                            WHERE id = :id
                          ''',
                          {
                              'gpa': new_gpa,
-                             'user': userID,
-                             'uni': uni,
-                             'year': year,
+                             'id': id,
                          }) \
                 .rowcount
 
     return n > 0
 
 
-def delete_graduation(userID: int, uni: str, year: int) -> bool:
-    uni = uni.strip()
-    n = con.execute('''DELETE FROM graduation
-                       WHERE userID = ?
-                       AND university = ?
-                       AND year = ?''',
-                    (userID, uni, year)) \
-           .rowcount
+def delete_education(id: int) -> bool:
+    n = con.execute('DELETE FROM education WHERE id = ?', (id,)).rowcount
     return n > 0
 
 
@@ -389,22 +376,30 @@ def delete_experience(userID: int, posID: int) -> bool:
     return n > 0
 
 
-def add_enrollment(userID: int, courseID: int) -> bool:
+def add_enrollment(educationID: int, courseID: int) -> bool:
     n = con.execute('INSERT INTO enrollment VALUES (?, ?)',
-                    (userID, courseID)) \
+                    (educationID, courseID)) \
            .rowcount
     return n > 0
 
 
-def check_enrollment(userID: int, courseID: int) -> bool:
+def check_enrollment(educationID: int, courseID: int) -> bool:
     r = con.execute('''SELECT * FROM enrollment
+                       WHERE educationID = ? AND courseID = ?''',
+                    (educationID, courseID)).fetchall()
+    return len(r) > 0
+
+
+def check_enrollment_all(userID: int, courseID: int) -> bool:
+    r = con.execute('''SELECT * FROM enrollment e JOIN education edu
+                       ON e.educationID = edu.id
                        WHERE userID = ? AND courseID = ?''',
                     (userID, courseID)).fetchall()
     return len(r) > 0
 
 
-def remove_enrollment(userID: int, courseID: int) -> bool:
+def remove_enrollment(educationID: int, courseID: int) -> bool:
     n = con.execute('''DELETE FROM enrollment
-                       WHERE userID = ? AND courseID = ?''',
-                    (userID, courseID)).rowcount
+                       WHERE educationID = ? AND courseID = ?''',
+                    (educationID, courseID)).rowcount
     return n > 0

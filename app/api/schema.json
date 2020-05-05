@@ -29,7 +29,7 @@
                             "delete": {"type", "boolean"}
                         }
                     },
-                    "$comment": "remove the graduation and all enrollments for this school/year",
+                    "$comment": "remove the education and all enrollments for this school/year",
                     "delete": {"type": "boolean"}
                 }
             }
