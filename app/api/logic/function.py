@@ -111,7 +111,7 @@ def get_job_for_education_background(userID: int):
 
 # take a desired job title + industry
 # return a list of courses that people who have that (or similar) job took
-def get_classes_for_career(industry: str, job: str = None, university: str = None):
+def get_classes_for_career(industry: str, job: str = None, school: str = None, threshold=3):
     """Return a list of potential classes related to the given industry.
 
     Classes are filtered by users who work in a particular position/industry
@@ -129,48 +129,74 @@ def get_classes_for_career(industry: str, job: str = None, university: str = Non
 
     params = [f'%{industry}%']  # fuzzy match industry
     query_join_position = ''
-    query_filter_title = ''
-    query_filter_university = ''
+    query_filter_job = ''
+    query_filter_school = ''
 
     if job is not None:
         params.append(f'%{job}%')  # fuzzy match job
         query_join_position = 'JOIN position p ON ex.positionID = p.id'
-        query_filter_title = 'AND jobTitle LIKE ?'
+        query_filter_job = 'AND jobTitle LIKE ?'
 
-    if university is not None:
-        print(university)
-        params.append(f'%{university}%')
-        query_filter_university = 'AND university LIKE ?'
+    if school is not None:
+        params.append(f'%{school}%')  # fuzzy match school
+        query_filter_school = 'AND university LIKE ?'
 
-    query = '''SELECT courseNumber || ': ' || courseTitle as course,
-                      universityName as university
-               FROM (experience NATURAL JOIN education) ex
-               JOIN enrollment e
-               ON e.educationID = ex.id
-               JOIN course c
-               ON e.courseID = c.id
-               {}
-               WHERE industry LIKE ?
-               {}
-               {}
-            '''.format(query_join_position, query_filter_title, query_filter_university)
+    base_query = '''SELECT courseNumber || ': ' || courseTitle as course,
+                           universityName as university
+                    FROM (experience NATURAL JOIN education) ex
+                    JOIN enrollment e
+                    ON e.educationID = ex.id
+                    JOIN course c
+                    ON e.courseID = c.id
+                    {}
+                    {}
+                 '''
 
-    rows = con.execute(query, params).fetchall()
+    where_clause = 'WHERE industry LIKE ? {} {}'.format(query_filter_job, query_filter_school)
+
+    positive_query = base_query.format(query_join_position, where_clause)
+    print(positive_query)
+    positive_matches = con.execute(positive_query, params).fetchall()
+
+
+    where_clause = 'WHERE'
+    if job is not None:
+        where_clause += ' (industry NOT LIKE ? OR jobTitle NOT LIKE ?)'
+    else:
+        where_clause += ' industry NOT LIKE ?'
+
+    if school is not None:
+        where_clause += ' AND university LIKE ?'
+
+    negative_query = base_query.format(query_join_position, where_clause)
+    negative_matches = con.execute(negative_query, params).fetchall()
+
 
     # build a dictionary mapping universities to courses, with each course having
     # an associate count (as a relevance metric)
     results = defaultdict(lambda: defaultdict(int))
-    for row in rows:
+    for row in positive_matches:
         results[row['university']][row['course']] += 1
+
+    for row in negative_matches:
+        results[row['university']][row['course']] -= 1
 
     # for each university (key k), sort the list of courses by relevance
     for k, v in results.items():
+        # filter out any courses with negative relevance
+        courses = list(filter(lambda x: x[1] > 0, v.items()))
+        # courses = v.items()
+
         # sort alphabetically by course first, then sort by descending count
         # items with the same count wont be reordered
-        sort = sorted(v.items(), key=lambda x: x[0], reverse=False)
-        sort = sorted(sort, key=lambda x: x[1], reverse=True)
+        courses = sorted(courses, key=lambda x: x[0], reverse=False)
+        courses = sorted(courses, key=lambda x: x[1], reverse=True)
         # strip off the count, we don't need to show that to the user
-        results[k] = list(map(lambda x: x[0], sort))
+        # also limit results to 20 per university
+        results[k] = list(map(lambda x: x[0], courses))[:20]
+
+    # elide any universities which have no courses
+    results = {k: v for k, v in results.items() if len(v) > 0}
 
     if len(results) == 0:
         return ('', 204)
