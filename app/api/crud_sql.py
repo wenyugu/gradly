@@ -240,11 +240,22 @@ def find_education(userID: int, uni: str, year: int) -> Row:
 
 
 def update_education(id: int, **kwargs) -> bool:
+    new_year = kwargs.get('year')
     new_degree = kwargs.get('degree')
     new_major = kwargs.get('major')
     new_gpa = kwargs.get('gpa')
 
     n = 0
+
+    if new_year is not None:
+        n += con.execute('''UPDATE education SET year = :year
+                            WHERE id = :id
+                         ''',
+                         {
+                             'year': new_year,
+                             'id': id
+                         }) \
+                .rowcount
 
     if new_degree is not None:
         if isinstance(new_degree, DegreeType):

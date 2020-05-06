@@ -144,6 +144,7 @@ def get_user(userID: int):
     userInfo['education'] = []
     for education in get_education_for_user(userID):
         grad = {}
+        grad['id'] = education['id']
         grad['school'] = education['university']
         grad['year'] = education['year']
         grad['degree'] = education['degree']
@@ -228,15 +229,20 @@ def update_user(userID: int, request_json: JSONType):
             crud.update_user(userID, skills)
 
         for item in education_history:
+            eduID = item['id']
             school = item['school']  # required field
             grad_date = item['year']  # required field
             delete = item.get('delete', False)
 
-            educatation = crud.find_education(userID, school, grad_date)
-            if educatation is not None:
-                eduID = educatation['id']
-            else:
+
+
+            education = crud.read_education(eduID)
+            if education is None:
+                education = crud.find_education(userID, school, grad_date)
+            if education is None:
                 eduID = crud.create_education(userID, school, grad_date)
+            else:
+                eduID = education['id']
 
             if delete:
                 crud.delete_education(eduID)
@@ -246,7 +252,7 @@ def update_user(userID: int, request_json: JSONType):
             # which is distinct from a null value. Thus, we must only include the
             # argument if the key was actually present (even if `value` is `None`)
             kwargs = {}
-            for key in ['degree', 'major', 'gpa']:
+            for key in ['year', 'degree', 'major', 'gpa']:
                 if key in item:
                     value = item[key]
                     if key == 'degree':

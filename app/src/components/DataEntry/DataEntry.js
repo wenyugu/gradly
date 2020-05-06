@@ -50,7 +50,7 @@ export default class DataEntry extends Component {
     };
 
     addCourse = index => {
-        const values = JSON.parse(JSON.stringify(this.state.education)); 
+        const values = JSON.parse(JSON.stringify(this.state.education));
         values[index].courses.push({num: '', name: ''});
         this.setState({ education: values });
     };
@@ -88,8 +88,8 @@ export default class DataEntry extends Component {
             value = parseInt(value);
         }
         values[idx][input] = value;
-        this.setState({ 
-            experience : values 
+        this.setState({
+            experience : values
         });
     }
 
@@ -103,8 +103,8 @@ export default class DataEntry extends Component {
 
     handleSkillsChange = options => {
         const values = options.map(el => (el.value));
-        this.setState({ 
-            skills : values 
+        this.setState({
+            skills : values
         });
     }
 
@@ -165,7 +165,7 @@ export default class DataEntry extends Component {
                 {
                     this.state.success ?
                         (<Alert variant="success">
-                            <Alert.Heading>Submitted succesfully</Alert.Heading>
+                            <Alert.Heading>Submitted successfully</Alert.Heading>
                             <p>
                                 Thank you! We have received your response. Your userID is {this.state.uid}. Remember you can always update or delete your entry by using your ID.
                             </p>
@@ -215,8 +215,8 @@ export default class DataEntry extends Component {
                                                     <Col>
                                                         <Form.Group>
                                                             <Form.Label>Major</Form.Label>
-                                                            <Form.Control 
-                                                                placeholder="Major" 
+                                                            <Form.Control
+                                                                placeholder="Major"
                                                                 type="text"
                                                                 required
                                                                 value={this.state.education[idx].major}
@@ -262,8 +262,8 @@ export default class DataEntry extends Component {
                                                                 <Col>
                                                                     <Form.Group>
                                                                         <Form.Label>Course Name</Form.Label>
-                                                                        <Form.Control 
-                                                                            placeholder="Ex. Database Systems" 
+                                                                        <Form.Control
+                                                                            placeholder="Ex. Database Systems"
                                                                             type='text'
                                                                             value={this.state.education[idx].courses[index].name}
                                                                             onChange={this.handleCourseChange('name', idx, index)}
@@ -273,8 +273,8 @@ export default class DataEntry extends Component {
                                                                 <Col>
                                                                     <Form.Group>
                                                                         <Form.Label>Course Number</Form.Label>
-                                                                        <Form.Control 
-                                                                            placeholder="Ex. CS411" 
+                                                                        <Form.Control
+                                                                            placeholder="Ex. CS411"
                                                                             type='text'
                                                                             value={this.state.education[idx].courses[index].num}
                                                                             onChange={this.handleCourseChange('num', idx, index)}
@@ -307,8 +307,8 @@ export default class DataEntry extends Component {
                                                 <Button variant="dark" className='float-right' size='sm' onClick={() => this.removeExperience(idx)}>—</Button>
                                                 <Form.Group>
                                                     <Form.Label>Employer</Form.Label>
-                                                    <Form.Control 
-                                                        placeholder="Ex. Google" 
+                                                    <Form.Control
+                                                        placeholder="Ex. Google"
                                                         type='text'
                                                         required
                                                         value={this.state.experience[idx].employer}
@@ -320,8 +320,8 @@ export default class DataEntry extends Component {
                                                 </Form.Group>
                                                 <Form.Group>
                                                     <Form.Label>Title</Form.Label>
-                                                    <Form.Control 
-                                                        placeholder="Ex. Software Engineer" 
+                                                    <Form.Control
+                                                        placeholder="Ex. Software Engineer"
                                                         type='text'
                                                         required
                                                         value={this.state.experience[idx].title}
@@ -359,7 +359,7 @@ export default class DataEntry extends Component {
                                                 </Form.Group>
                                                 <Form.Group>
                                                     <Form.Label>Annual Salary</Form.Label>
-                                                    <Form.Control 
+                                                    <Form.Control
                                                         placeholder='USD per year'
                                                         type='number'
                                                         value={this.state.experience[idx].salary}

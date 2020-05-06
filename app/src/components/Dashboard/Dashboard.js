@@ -17,6 +17,7 @@ export default class Dashboard extends Component {
             title: '',
             edittable: false,
             error: 0,
+            success: false,
             checkNum: -1,
             courseRec: {},
             jobRec: []
@@ -24,7 +25,7 @@ export default class Dashboard extends Component {
     }
 
     handleOperationSelect = (option) => {
-        this.setState({mode: option.value, edittable: false});
+        this.setState({mode: option.value, edittable: false, success: false});
     }
 
     getUser = () => {
@@ -42,7 +43,7 @@ export default class Dashboard extends Component {
         axios.post('/api/user/' + this.state.uid, user)
             .then(response => {
                 console.log(response.data);
-                this.setState({ error: 0 });
+                this.setState({ error: 0, success: true });
             })
             .catch(error => {
                 console.log(error);
@@ -57,19 +58,19 @@ export default class Dashboard extends Component {
                 this.getUser();
             } else if (this.state.mode === 1) {
                 this.getUser();
-                
+
             } else if (this.state.mode === 2) {
                 axios.delete('/api/user/' + this.state.uid)
                     .then(response => {
                         console.log(response.data);
-                        this.setState({ error: 0 });
+                        this.setState({ error: 0, success: true });
                     })
                     .catch(error => {
                         console.log(error);
                         this.setState({ error: 1 });
                     });
             } else if (this.state.mode === 3) {
-                if (this.state.checkNum == 0) {
+                if (this.state.checkNum === 0) {
                     const params = { userID: this.state.uid };
                     axios.get('/api/query/careers', { params: params })
                         .then(response =>{
@@ -80,9 +81,9 @@ export default class Dashboard extends Component {
                             this.setState({ error: 1, jobRec: [] });
                         })
                 }
-            } 
-        } 
-        if (this.state.mode === 3 && this.state.checkNum == 1) {
+            }
+        }
+        if (this.state.mode === 3 && this.state.checkNum === 1) {
             var params;
             if (this.state.title) {
                 params = { industry: this.state.industry, title: this.state.title };
@@ -120,7 +121,7 @@ export default class Dashboard extends Component {
                       </p>
                     </Container>
                   </Jumbotron>
-                ) : null } 
+                ) : null }
                 <InputGroup >
                     <div style={{width: '15%'}}>
                         <Select
@@ -138,7 +139,7 @@ export default class Dashboard extends Component {
                                 <FormControl type='text' name='industry' value={this.state.industry} placeholder='Desired industry: Ex. Internet' onChange={this.handleChange} />
                                 <FormControl type='text' name='title' value={this.state.title} placeholder='Desired position: Ex. Engineer' onChange={this.handleChange} />
                             </>
-                            
+
                         ) : null
                     }
                     <InputGroup.Append>
@@ -173,11 +174,13 @@ export default class Dashboard extends Component {
                         </Form>
                     ) : null
                 }
-                { this.state.error == 1 ? (<Alert variant="danger">UserID not found.</Alert>) : null }
-                { this.state.error == 2 ? (<Alert variant="danger">Something went wrong.</Alert>) : null }
+                { this.state.error === 1 ? (<Alert variant="danger">UserID not found.</Alert>) : null }
+                { this.state.error === 2 ? (<Alert variant="danger">Something went wrong.</Alert>) : null }
+                { this.state.mode === 1 && this.state.success ? (<Alert variant="success">Successfully updated user.</Alert>) : null }
+                { this.state.mode === 2 && this.state.success ? (<Alert variant="success">Successfully deleted user.</Alert>) : null }
                 { this.state.mode === 0 && this.state.user && <Profile user={this.state.user} /> }
                 { this.state.edittable && this.state.mode === 1 && this.state.user && <DataEntry user={this.state.user} update={this.updateUser}/> }
-                { this.state.mode === 3 && this.state.checkNum == 0 && this.state.jobRec && 
+                { this.state.mode === 3 && this.state.checkNum === 0 && this.state.jobRec &&
                 <Table>
                     <tbody>
                         { this.state.jobRec.map((el, idx) => (
@@ -187,7 +190,7 @@ export default class Dashboard extends Component {
                         ))}
                     </tbody>
                 </Table> }
-                { this.state.mode === 3 && this.state.checkNum == 1 && this.state.courseRec && 
+                { this.state.mode === 3 && this.state.checkNum === 1 && this.state.courseRec &&
                 <Table>
                         { Object.keys(this.state.courseRec).map((el, idx) => (
                             <>
