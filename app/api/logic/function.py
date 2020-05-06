@@ -138,8 +138,9 @@ def get_classes_for_career(industry: str, job: str = None, university: str = Non
         query_filter_title = 'AND jobTitle LIKE ?'
 
     if university is not None:
-        params.append(university)
-        query_filter_university = 'AND university = ?'
+        print(university)
+        params.append(f'%{university}%')
+        query_filter_university = 'AND university LIKE ?'
 
     query = '''SELECT courseNumber || ': ' || courseTitle as course,
                       universityName as university
@@ -171,6 +172,8 @@ def get_classes_for_career(industry: str, job: str = None, university: str = Non
         # strip off the count, we don't need to show that to the user
         results[k] = list(map(lambda x: x[0], sort))
 
+    if len(results) == 0:
+        return ('', 204)
     return results
 
 

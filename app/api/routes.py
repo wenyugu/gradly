@@ -63,7 +63,7 @@ def courses():
     args = request.args
     industry = args['industry']  # required
     title = args.get('title')
-    university = args.get('university')
+    university = args.get('school')
     return get_classes_for_career(industry, title, university)
 
 
