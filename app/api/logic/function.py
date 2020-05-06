@@ -27,7 +27,7 @@ con.create_aggregate("CAREER_WEIGHT", 6, CareerWeight)
 
 # take a user’s university
 # return a list of job titles that other users with similar education have reported
-def get_job_for_education_background(userID: int):
+def get_job_for_education_background(userID: int, limit:int=20):
     """Get a list of jobs held by users of similar educational background.
 
     For each entry in this user's education, attempt to match other users
@@ -101,8 +101,9 @@ def get_job_for_education_background(userID: int):
             a.major, a.university, a.degree, b.major, b.university, b.degree
         ) > 0
         ORDER BY weight DESC
+        LIMIT ?
         ''',
-        (userID,)
+        (userID, limit)
     ).fetchall()
 
     results = [{'role': r['job'], 'relevance': r['weight']} for r in rows]
@@ -111,7 +112,7 @@ def get_job_for_education_background(userID: int):
 
 # take a desired job title + industry
 # return a list of courses that people who have that (or similar) job took
-def get_classes_for_career(industry: str, job: str = None, school: str = None, threshold=3):
+def get_classes_for_career(industry: str, job: str = None, school: str = None, threshold:int=3):
     """Return a list of potential classes related to the given industry.
 
     Classes are filtered by users who work in a particular position/industry
