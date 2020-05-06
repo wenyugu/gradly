@@ -38,43 +38,43 @@ export default class DataEntry extends Component {
     }
 
     addEducation = () => {
-        const values = [...this.state.education];
+        const values = JSON.parse(JSON.stringify(this.state.education));
         values.push(defaultEducation);
         this.setState({education: values});
     }
 
     removeEducation = index => {
-        const values = [...this.state.education];
+        const values = JSON.parse(JSON.stringify(this.state.education));
         values.splice(index, 1);
         this.setState({ education: values });
     };
 
     addCourse = index => {
-        const values = JSON.parse(JSON.stringify(this.state.education)); 
+        const values = JSON.parse(JSON.stringify(this.state.education));
         values[index].courses.push({num: '', name: ''});
         this.setState({ education: values });
     };
 
     removeCourse = (num, index) => {
-        const values = [...this.state.education];
+        const values = JSON.parse(JSON.stringify(this.state.education));
         values[num].courses.splice(index, 1);
         this.setState({ education: values });
     }
 
     addExperience = () => {
-        const values = [...this.state.experience];
+        const values = JSON.parse(JSON.stringify(this.state.experience));
         values.push(defaultExperience);
         this.setState({experience: values});
     }
 
     removeExperience = index => {
-        const values = [...this.state.experience];
+        const values = JSON.parse(JSON.stringify(this.state.experience));
         values.splice(index, 1);
         this.setState({ experience: values });
     };
 
     handleEducationChange = (input, idx) => event => {
-        const values = [...this.state.education];
+        const values = JSON.parse(JSON.stringify(this.state.education));
         values[idx][input] = event.target.value;
         this.setState({
             education: values,
@@ -82,19 +82,19 @@ export default class DataEntry extends Component {
     }
 
     handleExperienceChange = (input, idx) => event => {
-        const values = [...this.state.experience];
+        const values = JSON.parse(JSON.stringify(this.state.experience));
         var value = event.target.value;
         if (input === 'rating' || input === 'salary') {
             value = parseInt(value);
         }
         values[idx][input] = value;
-        this.setState({ 
-            experience : values 
+        this.setState({
+            experience : values
         });
     }
 
     handleCourseChange = (item, pidx, sidx) => event => {
-        const values = [...this.state.education];
+        const values = JSON.parse(JSON.stringify(this.state.education));
         values[pidx].courses[sidx][item] = event.target.value;
         this.setState({
             education: values,
@@ -103,14 +103,14 @@ export default class DataEntry extends Component {
 
     handleSkillsChange = options => {
         const values = options.map(el => (el.value));
-        this.setState({ 
-            skills : values 
+        this.setState({
+            skills : values
         });
     }
 
     handleEducationSelect = (input, idx) => option => {
         if (!option) {return;}
-        const values = [...this.state.education];
+        const values = JSON.parse(JSON.stringify(this.state.education));
         values[idx][input] = option.value;
         this.setState({
             education: values,
@@ -119,7 +119,7 @@ export default class DataEntry extends Component {
 
     handleExperienceSelect = (input, idx) => option => {
         if (!option) {return;}
-        const values = [...this.state.experience];
+        const values = JSON.parse(JSON.stringify(this.state.experience));
         values[idx][input] = option.value;
         this.setState({
             experience: values,
@@ -160,13 +160,12 @@ export default class DataEntry extends Component {
     }
 
     render() {
-        const { user, update } = this.props;
         return (
             <div>
                 {
                     this.state.success ?
                         (<Alert variant="success">
-                            <Alert.Heading>Submitted succesfully</Alert.Heading>
+                            <Alert.Heading>Submitted successfully</Alert.Heading>
                             <p>
                                 Thank you! We have received your response. Your userID is {this.state.uid}. Remember you can always update or delete your entry by using your ID.
                             </p>
@@ -194,7 +193,7 @@ export default class DataEntry extends Component {
                                                         menuPortalTarget={document.querySelector('body')}
                                                         styles={selectStyles}
                                                         options={institutionOptions}
-                                                        defaultValue={user ? this.getOption(user.education[idx].school) : null}
+                                                        defaultValue={this.state.education[idx] ? this.getOption(this.state.education[idx].school) : null}
                                                         onChange={this.handleEducationSelect('school', idx)}
                                                     />
                                                 </Form.Group>
@@ -208,7 +207,7 @@ export default class DataEntry extends Component {
                                                         menuPortalTarget={document.querySelector('body')}
                                                         styles={selectStyles}
                                                         options={degreeOptions}
-                                                        defaultValue={user ? this.getOption(user.education[idx].degree) : null}
+                                                        defaultValue={this.state.education[idx] ? this.getOption(this.state.education[idx].degree) : null}
                                                         onChange={this.handleEducationSelect('degree', idx)}
                                                     />
                                                 </Form.Group>
@@ -216,11 +215,11 @@ export default class DataEntry extends Component {
                                                     <Col>
                                                         <Form.Group>
                                                             <Form.Label>Major</Form.Label>
-                                                            <Form.Control 
-                                                                placeholder="Major" 
+                                                            <Form.Control
+                                                                placeholder="Major"
                                                                 type="text"
                                                                 required
-                                                                value={user ? user.education[idx].major: this.state.education[idx].major}
+                                                                value={this.state.education[idx].major}
                                                                 onChange={this.handleEducationChange('major', idx)}
                                                             />
                                                             <Form.Control.Feedback type="invalid">
@@ -235,7 +234,7 @@ export default class DataEntry extends Component {
                                                                 placeholder="GPA: Optional"
                                                                 type="number"
                                                                 step="0.01"
-                                                                value={user ? user.education[idx].gpa : (this.state.education[idx].gpa || '')}
+                                                                value={this.state.education[idx].gpa || ''}
                                                                 onChange={this.handleEducationChange('gpa', idx)}
                                                             />
                                                         </Form.Group>
@@ -250,7 +249,7 @@ export default class DataEntry extends Component {
                                                         menuPortalTarget={document.querySelector('body')}
                                                         styles={selectStyles}
                                                         options={yearOptions}
-                                                        defaultValue={user ? this.getOption(user.education[idx].year) : null}
+                                                        defaultValue={this.state.education[idx] ? this.getOption(this.state.education[idx].year) : null}
                                                         onChange={this.handleEducationSelect('year', idx)}
                                                     />
                                                 </Form.Group>
@@ -263,10 +262,10 @@ export default class DataEntry extends Component {
                                                                 <Col>
                                                                     <Form.Group>
                                                                         <Form.Label>Course Name</Form.Label>
-                                                                        <Form.Control 
-                                                                            placeholder="Ex. Database Systems" 
+                                                                        <Form.Control
+                                                                            placeholder="Ex. Database Systems"
                                                                             type='text'
-                                                                            value={user ? user.education[idx].courses[index].name : this.state.education[idx].courses[index].name}
+                                                                            value={this.state.education[idx].courses[index].name}
                                                                             onChange={this.handleCourseChange('name', idx, index)}
                                                                         />
                                                                     </Form.Group>
@@ -274,10 +273,10 @@ export default class DataEntry extends Component {
                                                                 <Col>
                                                                     <Form.Group>
                                                                         <Form.Label>Course Number</Form.Label>
-                                                                        <Form.Control 
-                                                                            placeholder="Ex. CS411" 
+                                                                        <Form.Control
+                                                                            placeholder="Ex. CS411"
                                                                             type='text'
-                                                                            value={user ? user.education[idx].courses[index].num : this.state.education[idx].courses[index].num}
+                                                                            value={this.state.education[idx].courses[index].num}
                                                                             onChange={this.handleCourseChange('num', idx, index)}
                                                                         />
                                                                     </Form.Group>
@@ -308,11 +307,11 @@ export default class DataEntry extends Component {
                                                 <Button variant="dark" className='float-right' size='sm' onClick={() => this.removeExperience(idx)}>—</Button>
                                                 <Form.Group>
                                                     <Form.Label>Employer</Form.Label>
-                                                    <Form.Control 
-                                                        placeholder="Ex. Google" 
+                                                    <Form.Control
+                                                        placeholder="Ex. Google"
                                                         type='text'
                                                         required
-                                                        value={user ? user.experience[idx].employer : this.state.experience[idx].employer}
+                                                        value={this.state.experience[idx].employer}
                                                         onChange={this.handleExperienceChange('employer', idx)}
                                                     />
                                                     <Form.Control.Feedback type="invalid">
@@ -321,11 +320,11 @@ export default class DataEntry extends Component {
                                                 </Form.Group>
                                                 <Form.Group>
                                                     <Form.Label>Title</Form.Label>
-                                                    <Form.Control 
-                                                        placeholder="Ex. Software Engineer" 
+                                                    <Form.Control
+                                                        placeholder="Ex. Software Engineer"
                                                         type='text'
                                                         required
-                                                        value={user ? user.experience[idx].title : this.state.experience[idx].title}
+                                                        value={this.state.experience[idx].title}
                                                         onChange={this.handleExperienceChange('title', idx)}
                                                     />
                                                     <Form.Control.Feedback type="invalid">
@@ -342,7 +341,7 @@ export default class DataEntry extends Component {
                                                         menuPortalTarget={document.querySelector('body')}
                                                         styles={selectStyles}
                                                         options={empOptions}
-                                                        defaultValue={user ? this.getOption(user.experience[idx].type) : null}
+                                                        defaultValue={this.state.experience[idx] ? this.getOption(this.state.experience[idx].type) : null}
                                                         onChange={this.handleExperienceSelect('type', idx)}
                                                     />
                                                 </Form.Group>
@@ -354,16 +353,16 @@ export default class DataEntry extends Component {
                                                         menuPortalTarget={document.querySelector('body')}
                                                         styles={selectStyles}
                                                         options={industryOptions}
-                                                        defaultValue={user ? this.getOption(user.experience[idx].industry) : null}
+                                                        defaultValue={this.state.experience[idx] ? this.getOption(this.state.experience[idx].industry) : null}
                                                         onChange={this.handleExperienceSelect('industry', idx)}
                                                     />
                                                 </Form.Group>
                                                 <Form.Group>
                                                     <Form.Label>Annual Salary</Form.Label>
-                                                    <Form.Control 
+                                                    <Form.Control
                                                         placeholder='USD per year'
                                                         type='number'
-                                                        value={user ? this.state.experience[idx].salary : this.state.experience[idx].salary}
+                                                        value={this.state.experience[idx].salary}
                                                         onChange={this.handleExperienceChange('salary', idx)}
                                                     />
                                                     <Form.Control.Feedback type="invalid">
@@ -372,7 +371,7 @@ export default class DataEntry extends Component {
                                                 </Form.Group>
                                                 <Form.Group>
                                                     <Form.Label>Rating (0-10)</Form.Label>
-                                                    <RangeSlider value={user ? this.state.experience[idx].rating : this.state.experience[idx].rating} onChange={this.handleExperienceChange('rating', idx)} max={10} />
+                                                    <RangeSlider value={this.state.experience[idx].rating} onChange={this.handleExperienceChange('rating', idx)} max={10} />
                                                 </Form.Group>
                                             </Fragment>
                                         ))
@@ -396,7 +395,7 @@ export default class DataEntry extends Component {
                                             menuPortalTarget={document.querySelector('body')}
                                             styles={selectStyles}
                                             options={skillsOptions}
-                                            defaultValue={user ? this.getOption(user.skills) : null}
+                                            defaultValue={this.state.skills ? this.getOption(this.state.skills) : null}
                                             onChange={this.handleSkillsChange}
                                         />
                                     </Form.Group>

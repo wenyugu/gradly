@@ -9,6 +9,7 @@ con = sqlite3.connect('../db/app.db')
 con.isolation_level = None
 # supports mapping access by column name and index, iteration, etc
 con.row_factory = sqlite3.Row
+con.execute("PRAGMA foreign_keys = ON")
 
 
 @app.shell_context_processor

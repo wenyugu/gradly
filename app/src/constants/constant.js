@@ -3,7 +3,7 @@ export const defaultEducation = {
     degree: '',
     major: '',
     gpa: null,
-    year: 1900,
+    year: '',
     courses: [{ num: '', name: '' }]
 }
 export const defaultEducations = [defaultEducation]

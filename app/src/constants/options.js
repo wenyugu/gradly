@@ -2,6 +2,7 @@ export const queryOptions = [
     { value: 0, label: 'Search' },
     { value: 1, label: 'Update' },
     { value: 2, label: 'Delete' },
+    { value: 3, label: 'Query' }
 ]
 
 export const empOptions = [

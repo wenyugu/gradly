@@ -23,3 +23,9 @@ with open(os.path.join(BASEDIR, 'schema.sql'), 'r') as f:
 
 con.commit()
 con.close()
+
+print('To load the data into the new database, execute the following after starting the API:')
+print('~$ for user in db/data/user_*.json; do')
+print('>   curl -X POST -H "Content-Type: application/json" -d @$user http://localhost:5000/api/user/new')
+print('> done')
+print('')

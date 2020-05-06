@@ -57,7 +57,7 @@ def new_user(request_json: JSONType):
             gpa = item.get('gpa')
 
             university = crud.read_or_create_university(school)
-            crud.create_graduation(userID, university['name'], grad_date, degree, major, gpa)
+            eduID = crud.create_education(userID, university['name'], grad_date, degree, major, gpa)
 
             courses = item.get('courses', [])
             for c in courses:
@@ -67,10 +67,15 @@ def new_user(request_json: JSONType):
                 course = crud.find_course(courseTitle, courseNumber, university['name'])
                 if course is not None:
                     courseID = course['id']
+                    if not courseTitle == course['courseTitle'] or \
+                       not courseNumber == course['courseNumber']:
+                        crud.update_course(course['id'], name=courseTitle, num=courseNumber)
+                        print("updated course id {}".format(courseID))
                 else:
-                    courseID = crud.create_course(courseTitle, courseNumber, university['name'])
+                    courseID = crud.create_course(courseTitle, courseNumber, school)
 
-                crud.add_enrollment(userID, courseID)
+                if not crud.check_enrollment(eduID, courseID):
+                    crud.add_enrollment(eduID, courseID)
 
         # create work experience info
         for item in work_history:
@@ -135,36 +140,36 @@ def get_user(userID: int):
         skills = skills.split(',')
     userInfo['skills'] = skills
 
-    courses = get_courses_for_user(userID)
-    
+
     userInfo['education'] = []
-    for graduation in get_graduations_for_user(userID):
+    for education in get_education_for_user(userID):
         grad = {}
-        grad['school'] = graduation['university']
-        grad['year'] = graduation['year']
-        grad['degree'] = graduation['degree']
-        grad['major'] = graduation['major']
-        if graduation['gpa'] is not None:
-            grad['gpa'] = float(graduation['gpa'])
+        grad['id'] = education['id']
+        grad['school'] = education['university']
+        grad['year'] = education['year']
+        grad['degree'] = education['degree']
+        grad['major'] = education['major']
+        if education['gpa'] is not None:
+            grad['gpa'] = float(education['gpa'])
         else:
             grad['gpa'] = None
-    
-    
+
+
         grad['courses'] = []
+        courses = get_courses_for_edu(education['id'])
         for course in courses:
-            if course['universityName'] == graduation['university']:
-                grad['courses'].append({
-                    'name': course['courseTitle'],
-                    'num': course['courseNumber'],
-                })
-    
+            grad['courses'].append({
+                'name': course['courseTitle'],
+                'num': course['courseNumber'],
+            })
+
         userInfo['education'].append(grad)
-    
+
     userInfo['experience'] = []
     for job in get_experience_for_user(userID):
         positionID = job['positionID']
         position = crud.read_position(positionID)
-    
+
         exp = {}
         exp['employer'] = position['employerName']
         exp['title'] = position['jobTitle']
@@ -172,7 +177,7 @@ def get_user(userID: int):
         exp['salary'] = job['salary']
         exp['type'] = job['type']
         exp['rating'] = job['rating']
-    
+
         userInfo['experience'].append(exp)
 
     return userInfo
@@ -224,19 +229,30 @@ def update_user(userID: int, request_json: JSONType):
             crud.update_user(userID, skills)
 
         for item in education_history:
+            eduID = item['id']
             school = item['school']  # required field
             grad_date = item['year']  # required field
             delete = item.get('delete', False)
 
+
+
+            education = crud.read_education(eduID)
+            if education is None:
+                education = crud.find_education(userID, school, grad_date)
+            if education is None:
+                eduID = crud.create_education(userID, school, grad_date)
+            else:
+                eduID = education['id']
+
             if delete:
-                crud.delete_graduation(userID, school, grad_date)
+                crud.delete_education(eduID)
                 continue
 
             # NOTE: `item.get(key)`` will return `None` if the key is not present
             # which is distinct from a null value. Thus, we must only include the
             # argument if the key was actually present (even if `value` is `None`)
             kwargs = {}
-            for key in ['degree', 'major', 'gpa']:
+            for key in ['year', 'degree', 'major', 'gpa']:
                 if key in item:
                     value = item[key]
                     if key == 'degree':
@@ -245,7 +261,7 @@ def update_user(userID: int, request_json: JSONType):
                         if value is not None:
                             value = float(value)
                     kwargs[key] = value
-            crud.update_graduation(userID, school, grad_date, **kwargs)
+            crud.update_education(eduID, **kwargs)
 
             courses = item.get('courses', [])
             for c in courses:
@@ -254,20 +270,24 @@ def update_user(userID: int, request_json: JSONType):
                 delete = c.get('delete', False)
 
                 course = crud.find_course(courseTitle, courseNumber, school)
-                app.logger.info('Found course: {}'.format(dict(course)))
 
                 if delete and course is not None:
                     app.logger.info('Removing course enrollment: {}'.format(course['courseNumber']))
-                    crud.remove_enrollment(userID, course['id'])
+                    crud.remove_enrollment(eduID, course['id'])
                     continue
 
                 if course is not None:
-                    crud.update_course(course['id'], name=courseTitle, num=courseNumber)
+                    app.logger.info('Found course: {}'.format(dict(course)))
                     courseID = course['id']
+                    if not courseTitle == course['courseTitle'] or \
+                       not courseNumber == course['courseNumber']:
+                        crud.update_course(course['id'], name=courseTitle, num=courseNumber)
+                        print("updated course id {}".format(courseID))
                 else:
                     courseID = crud.create_course(courseTitle, courseNumber, school)
 
-                crud.add_enrollment(userID, courseID)
+                if not crud.check_enrollment(eduID, courseID):
+                    crud.add_enrollment(eduID, courseID)
 
         for item in work_history:
             employerName = item['employer']  # required field
@@ -340,20 +360,19 @@ def delete_user(userID: int):
     return {'status': 'Deleted user {}'.format(userID)}
 
 
-def get_courses_for_user(userID: int) -> List[Row]:
+def get_courses_for_edu(eduID: int) -> List[Row]:
     return con.execute('''SELECT * FROM course JOIN enrollment
                           WHERE course.id = enrollment.courseID
-                          AND enrollment.userID = ?
-                       ''', (userID,)) \
+                          AND enrollment.educationID = ?
+                       ''', (eduID,)) \
               .fetchall()
-    
-   
-def get_graduations_for_user(userID: int) -> List[Row]:
-    return con.execute('SELECT * FROM graduation WHERE userID = ?', (userID,)) \
+
+
+def get_education_for_user(userID: int) -> List[Row]:
+    return con.execute('SELECT * FROM education WHERE userID = ?', (userID,)) \
               .fetchall()
-              
+
 
 def get_experience_for_user(userID: int) -> List[Row]:
     return con.execute('SELECT * FROM experience WHERE userID = ?', (userID,)) \
               .fetchall()
-              

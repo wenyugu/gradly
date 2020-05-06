@@ -1,0 +1,3 @@
+# dont upload user info with identifiers attached.
+# identifiers are not stored in the db, so db dumps should be fine
+user_*.json
