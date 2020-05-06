@@ -32,7 +32,7 @@ CREATE TABLE experience (
     rating INTEGER,
     industry VARCHAR(36),
     PRIMARY KEY ("userID", "positionID"),
-    FOREIGN KEY("positionID") REFERENCES position (id),
+    FOREIGN KEY("positionID") REFERENCES position (id) ON DELETE CASCADE,
     FOREIGN KEY("userID") REFERENCES user (id) ON DELETE CASCADE,
     CONSTRAINT rating CHECK (rating BETWEEN 0 AND 10),
     CONSTRAINT jobtype CHECK (type IN ('intern', 'research', 'co-op', 'part-time', 'full-time')),
@@ -42,7 +42,7 @@ CREATE TABLE enrollment (
     "educationID" INTEGER NOT NULL,
     "courseID" INTEGER NOT NULL,
     PRIMARY KEY ("educationID", "courseID"),
-    FOREIGN KEY("courseID") REFERENCES course (id),
+    FOREIGN KEY("courseID") REFERENCES course (id) ON DELETE CASCADE,
     FOREIGN KEY("educationID") REFERENCES education (id) ON DELETE CASCADE
 );
 CREATE TABLE employer (
@@ -54,5 +54,5 @@ CREATE TABLE course (
     "universityName" VARCHAR(255) COLLATE NOCASE,
     "courseTitle" VARCHAR(255) NOT NULL COLLATE NOCASE,
     "courseNumber" VARCHAR(10) NOT NULL COLLATE NOCASE,
-    FOREIGN KEY("universityName") REFERENCES university (name) ON UPDATE CASCADE
+    FOREIGN KEY("universityName") REFERENCES university (name) ON UPDATE CASCADE ON DELETE CASCADE
 );

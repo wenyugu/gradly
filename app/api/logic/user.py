@@ -233,10 +233,10 @@ def update_user(userID: int, request_json: JSONType):
             delete = item.get('delete', False)
 
             educatation = crud.find_education(userID, school, grad_date)
-            if educatation is None:
-                continue
-
-            eduID = educatation['id']
+            if educatation is not None:
+                eduID = educatation['id']
+            else:
+                eduID = crud.create_education(userID, school, grad_date)
 
             if delete:
                 crud.delete_education(eduID)
@@ -264,7 +264,6 @@ def update_user(userID: int, request_json: JSONType):
                 delete = c.get('delete', False)
 
                 course = crud.find_course(courseTitle, courseNumber, school)
-                app.logger.info('Found course: {}'.format(dict(course)))
 
                 if delete and course is not None:
                     app.logger.info('Removing course enrollment: {}'.format(course['courseNumber']))
@@ -272,6 +271,7 @@ def update_user(userID: int, request_json: JSONType):
                     continue
 
                 if course is not None:
+                    app.logger.info('Found course: {}'.format(dict(course)))
                     courseID = course['id']
                     if not courseTitle == course['courseTitle'] or \
                        not courseNumber == course['courseNumber']:

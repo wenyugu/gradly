@@ -126,18 +126,14 @@ def get_classes_for_career(industry: str, job: str = None, university: str = Non
     Returns a dictionary mapping university names to a list of course numbers
     and titles, sorted aplhabetically
     """
-    try:
-        _ = Industry(industry).value
-    except ValueError:
-        abort(400, 'Invalid industry: {}'.format(industry))
 
-    params = [industry]
+    params = [f'%{industry}%']  # fuzzy match industry
     query_join_position = ''
     query_filter_title = ''
     query_filter_university = ''
 
     if job is not None:
-        params.append(f'%{job}%')
+        params.append(f'%{job}%')  # fuzzy match job
         query_join_position = 'JOIN position p ON ex.positionID = p.id'
         query_filter_title = 'AND jobTitle LIKE ?'
 
@@ -153,7 +149,7 @@ def get_classes_for_career(industry: str, job: str = None, university: str = Non
                JOIN course c
                ON e.courseID = c.id
                {}
-               WHERE industry = ?
+               WHERE industry LIKE ?
                {}
                {}
             '''.format(query_join_position, query_filter_title, query_filter_university)
@@ -168,11 +164,12 @@ def get_classes_for_career(industry: str, job: str = None, university: str = Non
 
     # for each university (key k), sort the list of courses by relevance
     for k, v in results.items():
-        results[k] = list(map(lambda e: e[0],
-                              sorted(v.items(),
-                                     key=lambda x: x[1],
-                                     reverse=True)
-                             ))
+        # sort alphabetically by course first, then sort by descending count
+        # items with the same count wont be reordered
+        sort = sorted(v.items(), key=lambda x: x[0], reverse=False)
+        sort = sorted(sort, key=lambda x: x[1], reverse=True)
+        # strip off the count, we don't need to show that to the user
+        results[k] = list(map(lambda x: x[0], sort))
 
     return results
 
