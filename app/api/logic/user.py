@@ -364,6 +364,7 @@ def get_courses_for_edu(eduID: int) -> List[Row]:
     return con.execute('''SELECT * FROM course JOIN enrollment
                           WHERE course.id = enrollment.courseID
                           AND enrollment.educationID = ?
+                          ORDER BY courseNumber, courseTitle
                        ''', (eduID,)) \
               .fetchall()
 
