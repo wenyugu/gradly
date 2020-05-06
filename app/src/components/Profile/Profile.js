@@ -9,12 +9,10 @@ const capitalize = (s) => {
 export default class Profile extends Component {
 
     render() {
-        const { user, error } = this.props;
+        const { user } = this.props;
         return (
             <div id='resume'>
-                {user ? (
-                    <>
-                    <dl>
+                <dl>
                     <dt>Education</dt>
                     <dd>
                     {
@@ -69,9 +67,6 @@ export default class Profile extends Component {
                     }
                     </dd>
                 </dl>
-                </>
-                ) : (error ? <h2>User Not Found</h2> : null)
-                }
             </div>
         );
     }

@@ -38,13 +38,13 @@ export default class DataEntry extends Component {
     }
 
     addEducation = () => {
-        const values = [...this.state.education];
+        const values = JSON.parse(JSON.stringify(this.state.education));
         values.push(defaultEducation);
         this.setState({education: values});
     }
 
     removeEducation = index => {
-        const values = [...this.state.education];
+        const values = JSON.parse(JSON.stringify(this.state.education));
         values.splice(index, 1);
         this.setState({ education: values });
     };
@@ -56,25 +56,25 @@ export default class DataEntry extends Component {
     };
 
     removeCourse = (num, index) => {
-        const values = [...this.state.education];
+        const values = JSON.parse(JSON.stringify(this.state.education));
         values[num].courses.splice(index, 1);
         this.setState({ education: values });
     }
 
     addExperience = () => {
-        const values = [...this.state.experience];
+        const values = JSON.parse(JSON.stringify(this.state.experience));
         values.push(defaultExperience);
         this.setState({experience: values});
     }
 
     removeExperience = index => {
-        const values = [...this.state.experience];
+        const values = JSON.parse(JSON.stringify(this.state.experience));
         values.splice(index, 1);
         this.setState({ experience: values });
     };
 
     handleEducationChange = (input, idx) => event => {
-        const values = [...this.state.education];
+        const values = JSON.parse(JSON.stringify(this.state.education));
         values[idx][input] = event.target.value;
         this.setState({
             education: values,
@@ -82,7 +82,7 @@ export default class DataEntry extends Component {
     }
 
     handleExperienceChange = (input, idx) => event => {
-        const values = [...this.state.experience];
+        const values = JSON.parse(JSON.stringify(this.state.experience));
         var value = event.target.value;
         if (input === 'rating' || input === 'salary') {
             value = parseInt(value);
@@ -94,7 +94,7 @@ export default class DataEntry extends Component {
     }
 
     handleCourseChange = (item, pidx, sidx) => event => {
-        const values = [...this.state.education];
+        const values = JSON.parse(JSON.stringify(this.state.education));
         values[pidx].courses[sidx][item] = event.target.value;
         this.setState({
             education: values,
@@ -110,7 +110,7 @@ export default class DataEntry extends Component {
 
     handleEducationSelect = (input, idx) => option => {
         if (!option) {return;}
-        const values = [...this.state.education];
+        const values = JSON.parse(JSON.stringify(this.state.education));
         values[idx][input] = option.value;
         this.setState({
             education: values,
@@ -119,7 +119,7 @@ export default class DataEntry extends Component {
 
     handleExperienceSelect = (input, idx) => option => {
         if (!option) {return;}
-        const values = [...this.state.experience];
+        const values = JSON.parse(JSON.stringify(this.state.experience));
         values[idx][input] = option.value;
         this.setState({
             experience: values,
