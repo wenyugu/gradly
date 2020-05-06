@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Button, Container, InputGroup, FormControl, Jumbotron, Form, Col, Row, Table } from 'react-bootstrap';
+import { Button, Container, InputGroup, FormControl, Jumbotron, Form, Col, Row, Table, Alert } from 'react-bootstrap';
 import Select from 'react-select';
 import Profile from '../Profile';
 import DataEntry from '../DataEntry';
@@ -42,9 +42,11 @@ export default class Dashboard extends Component {
         axios.post('/api/user/' + this.state.uid, user)
             .then(response => {
                 console.log(response.data);
+                this.setState({ error: 0 });
             })
             .catch(error => {
                 console.log(error);
+                this.setState({ error: 1 });
             });
     }
 
@@ -60,6 +62,7 @@ export default class Dashboard extends Component {
                 axios.delete('/api/user/' + this.state.uid)
                     .then(response => {
                         console.log(response.data);
+                        this.setState({ error: 0 });
                     })
                     .catch(error => {
                         console.log(error);
@@ -70,11 +73,11 @@ export default class Dashboard extends Component {
                     const params = { userID: this.state.uid };
                     axios.get('/api/query/careers', { params: params })
                         .then(response =>{
-                            this.setState({ jobRec: response.data.results })
+                            this.setState({ jobRec: response.data.results, error: 0 });
                         })
                         .catch(error => {
                             console.log(error);
-                            this.setState({ error: 1 });
+                            this.setState({ error: 1, jobRec: [] });
                         })
                 }
             } 
@@ -89,11 +92,11 @@ export default class Dashboard extends Component {
             axios.get('/api/query/courses', { params: params })
                 .then(response => {
                     console.log(response.data)
-                    this.setState({ courseRec: response.data });
+                    this.setState({ courseRec: response.data, error: 0 });
                 })
                 .catch(error => {
                     console.log(error);
-                    this.setState({ error: 2 });
+                    this.setState({ error: 2, courseRec: {} });
                 })
         }
     }
@@ -170,8 +173,10 @@ export default class Dashboard extends Component {
                         </Form>
                     ) : null
                 }
-                { this.state.mode === 0 && <Profile user={this.state.user} error={this.state.error}/> }
-                { this.state.edittable && this.state.mode === 1 && <DataEntry user={this.state.user} update={this.updateUser}/> }
+                { this.state.error == 1 ? (<Alert variant="danger">UserID not found.</Alert>) : null }
+                { this.state.error == 2 ? (<Alert variant="danger">Something went wrong.</Alert>) : null }
+                { this.state.mode === 0 && this.state.user && <Profile user={this.state.user} /> }
+                { this.state.edittable && this.state.mode === 1 && this.state.user && <DataEntry user={this.state.user} update={this.updateUser}/> }
                 { this.state.mode === 3 && this.state.checkNum == 0 && this.state.jobRec && 
                 <Table>
                     <tbody>
