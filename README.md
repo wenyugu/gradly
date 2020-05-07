@@ -14,64 +14,79 @@
     $ pip install -r requirements.txt
     ```
 
-## Updating the database
-
-The database schema is defined in `/app/api/models.py` as a series of classes and
-objects from the SQLAlchemy Flask extension. In general, each class which extends
-`db.Model` represents a table. One-to-many relationships are encoded using
-foreign keys and `relationships`, which are a high level abstraction of the
-reverse foreign key (basically an automatic `SELECT * FROM x WHERE foreignkey = id`). Many-to-many relationships are encoded in `db.Table` objects, at the
-recommendation of [the extension authors](https://flask-sqlalchemy.palletsprojects.com/en/2.x/models/). These tables contain foreign keys
-linking the two entities, as well as some additional attributes.
-
-The database schema can be modified using the Flask-Migrate extension, which
-tracks versions of the schema. To create the database for the first time:
-
-1. Ensure the database directory is present. The flask tools don't attempt to create folders that aren't there. The expected path can be found in `app/api/config.py`
-2. Inspect the list of revisions using `flask db history`. This will show the entire history of revisions with their comments. You should be able to identify the one you want (probably the newest).
-3. Run `flask db upgrade <revision>` to modify the database file according to the revision scripts. You may want to double check using a SQLite browser (built-in on macOS) as the scripts aren't perfect.
-4. If you need to return to an older version, use `flask db downgrade <revision>`.
-
-To update the DB schema, modify the models in `models.py`, then execute `flask db migrate` to generate a new revision file.  **NOTE:** This will not actually modify the database, you must run `upgrade` for your changes to take effect.
-
-#### Errors updating schema
-
-If you encounter errors upgrading the schema, one solution is to enter the flask shell and
-drop all tables then recreate them.  This will not attempt to retain any data, so this
-might not be a good idea if we have significant amounts of data but no automated way to
-ingest it.  Anyway, these are the steps:
-
-1. Enter the flask shell with `flask shell`
-2. Drop all the tables: `>>> db.drop_all()`
-3. Create the new tables: `>>> db.create_all()`
-4. Save the DB: `>>> db.session.commit()`
-5. Tell alembic (the flask db engine) that we did something and it should treat the current DB state as the application of all revisions: `flask db stamp head`
-
-### Populating the Database
-
-Currently, there is no initial data in the database. The database file itself is
-not under version control due to the indeterminate structure of the binary file.
-Thus, as we add new data, we will have to synchronize the database instances
-across machines.  The easiest way to do that is probably to nuke the DB and
-reload from an external file.
-
-*Note from Eric:* My next step is to add import/export support via CSV or SQL
-dump.  SQL dump is easier, but dependent on schema. CSV will take some more
-thinking to get right.
-
-The exact process for initialization and data ingestion is still in flux, but
-will be worked out soon.
-
-
 ## Running the App
 
 1. Open two terminal windows -- one for the app console and one for the api. Navigate to the `gradly/app` directory in both.
-2. In the first terminal, enter `yarn start` to start the react app on port 3000.
-3. In the second terminal, enter `yarn start-api` to start the flask api on port 5000.
+2. In the first terminal, enter `yarn start-api` to start the flask api on port 5000.
+1. In the second terminal, enter `yarn start` to start the react app on port 3000.
 
-### Testing
+Your browser should automatically open to `localhost:3000`. You may also use `curl` to interact with the API directly.
 
-#### CRUD
+## Managing the database
+
+While the frontend does provide CRUD functionality, it is focused on the meta-entity of a human user, rather than the
+DB entities which actually make up the relations. Thus, cleaning up extraneous entries or updating the schema must be
+done with external tools.
+
+### Editing the database directly
+
+Since the SQLite database is just a file with no server, it is possible to open it in several applications and make edits
+on the fly. If you need to edit the database, you may open `gradly/app/db/app.db` in a SQLite viewer of your choice. On
+macOS, "DB Browser for SQLite" comes preinstalled.
+
+### Modifying the schema
+
+If it becomes necessary to modify the database schema, you may do so by editing the `db/schema.sql` file. This is not
+a live file, meaning you will have to manually edit the database to reflect your changes. If the change is simple, like
+updating or adding a single table, you may use the Flask shell to execute the appropriate update commands directly on
+the existing database.
+
+```
+cd app/api
+source venv/bin/activate
+flask shell
+>>> con.execute('begin')
+>>> con.execute('...SQL query here...')
+>>> con.commit()
+>>> exit
+```
+
+For more substantial changes, you may wish to instead nuke the entire database and start from scratch. The `db/bootstrap.py`
+script is provided to remove the existing database file and create a new one with the currently defined `schema.sql` file.
+Note that any open connections to the database will become readonly when the file is deleted, so you will need to restart
+the API and close/reopen any DB browsers to continue interacting with the new database.
+
+If you have significant data stored in the current database, you may wish to back it up. If the updated schema is backwards
+compatible with the old one, you may be able to use the Flask shell to run `con.iterdump()` which generates a series of SQL
+commands to restore the database. If the schemas are not compatible, you will have to export the data using the JSON schema
+defined by the API. The following Python code will generate JSON documents for each current user.
+
+```python
+import json
+import requests
+import sqlite3
+
+con = sqlite3.connect('db/app.db')
+
+users = con.execute('SELECT id FROM user').fetchall()
+userIDs = map(lambda u: u['id'], users)
+
+for id in userIDs:
+    userInfo = requests.get(f'localhost:5000/api/user/{id}').json()
+    with open(f'db/data/dump_user_{id}', w) as f:
+        f.write(json.dumps(userInfo)) # optionally include indent=2 to pretty print
+```
+
+The bootstrap script provides printed instructions for loading bulk JSON data into a fresh database, just adjust the filename
+glob accordingly.
+
+**Note:** the DB file would usually not be under version control. We wanted to ensure an easily reproducible testing
+and demonstration environment so we committed a version of the DB with 20 seed users. We recommend against committing
+changes to this DB in your project.
+
+## Testing
+
+### CRUD
 
 1. start up the api server with `yarn start-api` from within the `/app` directory.
 2. Add a new user: `cat db/data/user_<name>.json | curl -H "Content-Type: application/json" -d @- http://localhost:5000/api/user/new`, where `<name>` is some identifier. Note the userID returned by the server.
